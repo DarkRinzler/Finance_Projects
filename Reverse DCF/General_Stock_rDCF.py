@@ -191,7 +191,7 @@ def monte_carlo_simulation(stock_parameters: Dict[str, Any], ds_rate: float, tgr
     return float(best_growth_rate), float(min_error)
 
 # Creating a DataFrame summary table of the implied growth rates for each value of terminal growth and discount rate
-#@timer
+@timer
 def implied_growth_rates_matrix(stock_parameters: Dict[str, Any]) -> pd.DataFrame:
 
     # Numpy array for the discount and terminal growth rates
