@@ -1,9 +1,15 @@
 from typing import Dict, Optional, Any
+from dotenv import load_dotenv
+
 import requests
 import time
+import os
 
-# API key
-api_key = 'b6f7526fc92d4753a5cc6d68f04dd486'
+# Load the .env file
+load_dotenv()
+
+# Get API key from the environment
+api_key = os.getenv('currency_API_key')
 
 # Openexchangerate URL
 url = f'https://openexchangerates.org/api/latest.json?app_id={api_key}&symbols=EUR,GBP,CHF,CAD'
