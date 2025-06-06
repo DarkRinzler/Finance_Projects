@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import seaborn as sns
-import Exchange_Rate_API as exrAPI
+import exchange_rate_api as exchange_api
 from matplotlib.ticker import FuncFormatter
 from colorama import Fore, init
 from tabulate import tabulate
@@ -37,9 +37,16 @@ currency_types: Dict[str, str] = {
         'CAD' : 'Canadian Dollar'
     }
 
-# Timer decorator
-def timer(func: Callable) -> Callable:
+prompts: Dict[str, str] = {
+        'currency' : 'Select the desired currency of the investment from the options below: ',                       # Currency of the desired investment
+        'initial investment' : 'Enter the amount of the initial investment in EUR (€): ',                            # Initial investment
+        'monthly contribution' : 'Enter the expected monthly contribution to the investment in EUR (€): ',           # Monthly contribution
+        'annual return rate': 'Enter the anticipated average annual return rate of the financial instrument (%): ',  # Annual return rate (e.g 10 %)
+        'investment period years': 'Enter the investment period in years: '                                          # Total investment period in years
+    }
 
+# Time wrapper to measure function execution time
+def timer(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args, **kwargs) -> Any:
         start_time: float = time.perf_counter()
@@ -64,14 +71,6 @@ def investment_input_parameters() -> Dict[str, Any]:
         if key_prompt == 'investment period_years' and value_prompt < 1:
             raise ValueError("The minimum investment period must be of 1 year")
 
-    prompts: Dict[str, str] = {
-        'currency' : 'Select the desired currency of the investment from the options below: ',                       # Currency of the desired investment
-        'initial investment' : 'Enter the amount of the initial investment in EUR (€): ',                            # Initial investment
-        'monthly contribution' : 'Enter the expected monthly contribution to the investment in EUR (€): ',           # Monthly contribution
-        'annual return rate': 'Enter the anticipated average annual return rate of the financial instrument (%): ',  # Annual return rate (e.g 10 %)
-        'investment period years': 'Enter the investment period in years: '                                          # Total investment period in years
-    }
-
     currency_keys = list(currency_types.keys())
     parameters: Dict[str, Any] = {}
 
@@ -91,7 +90,7 @@ def investment_input_parameters() -> Dict[str, Any]:
             print(f'Error: {e}')
 
     # Exchange rate for currency selection
-    rate = exrAPI.exchange_rate_request(parameters['currency'])
+    rate = exchange_api.exchange_rate_request(parameters['currency'])
 
     # Inputs validation for remaining prompts
     for key, prompt in prompts.items():
@@ -181,13 +180,13 @@ def plot_results(investment_parameters: Dict[str, Any], investment_growth: Tuple
     yearly_returns = investment_returns[::months_in_year]
     yearly_costs = investment_costs[::months_in_year]
 
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize = (12, 6))
     # Plot every 12th data point (yearly data)
-    investment_line = plt.plot(years_range, yearly_returns, label='Return', zorder=1)[0]
-    cost_line = plt.plot(years_range, yearly_costs, label='Cost', zorder=1)[0]
+    investment_line = plt.plot(years_range, yearly_returns, label = 'Return', zorder = 1)[0]
+    cost_line = plt.plot(years_range, yearly_costs, label = 'Cost', zorder = 1)[0]
 
     # Fill the area between the curves with light green
-    plt.fill_between(years_range, yearly_returns, yearly_costs, color='green', alpha=0.3, zorder=0)
+    plt.fill_between(years_range, yearly_returns, yearly_costs, color = 'green', alpha = 0.3, zorder = 0)
     # Yearly expenditure data
 
     # Get the colors of the plot lines
@@ -200,8 +199,8 @@ def plot_results(investment_parameters: Dict[str, Any], investment_growth: Tuple
     key_costs = investment_costs[np.array(key_years) * months_in_year]
 
     #Scatter plot for the key years
-    plt.scatter(key_years, key_returns, color='red', marker='.', s=60,  label='_nolegend_', zorder=2)  # Square marker for returns
-    plt.scatter(key_years, key_costs, color='red', marker='.', s=60, label='_nolegend_',zorder=2)      # Square marker for returns
+    plt.scatter(key_years, key_returns, color = 'red', marker = '.', s = 60,  label ='_nolegend_', zorder = 2)  # Square marker for returns
+    plt.scatter(key_years, key_costs, color = 'red', marker = '.', s = 60, label = '_nolegend_',zorder = 2)      # Square marker for returns
 
     # Add text inside same marker for each key year
     for year, ret, cost in zip(key_years, key_returns, key_costs):
@@ -214,45 +213,45 @@ def plot_results(investment_parameters: Dict[str, Any], investment_growth: Tuple
         left_offset = -0.32
 
         # Plot dashed lines to connect markers to the year
-        plt.plot([year, year], [0, ret], linestyle='--', color='grey', linewidth=1)
+        plt.plot([year, year], [0, ret], linestyle = '--', color = 'grey', linewidth = 1)
 
         plt.text(
             year + left_offset,
             ret + return_offset,
             f'Return: {ret:,.2f}',
-            ha='center',
-            va='center',
-            fontsize=8,
-            color=investment_color,
-            bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2'),
-            zorder=3
+            ha = 'center',
+            va = 'center',
+            fontsize = 8,
+            color = investment_color,
+            bbox = dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2'),
+            zorder = 3
         )
         plt.text(
             year + left_offset,
             ret + cost_offset,
             f'Cost: {cost:,.2f}',
-            ha='center',
-            va='center',
-            fontsize=8,
-            color=cost_color,
-            bbox=dict(facecolor='none', edgecolor='none', boxstyle='round,pad=0.2'),
-            zorder=3
+            ha = 'center',
+            va = 'center',
+            fontsize = 8,
+            color = cost_color,
+            bbox = dict(facecolor='none', edgecolor='none', boxstyle='round,pad=0.2'),
+            zorder = 3
         )
 
     # Set the y-axis to logarithmic scale
     plt.yscale('log')
 
     # Set the x-axis limit to start from 0
-    plt.xlim(left=0, right=key_years[-1] + 1)
+    plt.xlim(left = 0, right = key_years[-1] + 1)
 
     # Set the y-axis to start from the initial investment value
-    plt.ylim(bottom=investment_returns[0], top=investment_returns[-1] * 2.5)
+    plt.ylim(bottom = investment_returns[0], top = investment_returns[-1] * 2.5)
 
     # Apply plot label and title
     plt.title(f'Investment Growth - Total Return: {investment_returns[-1]:,.2f} {investment_parameters['currency']}',
-              fontsize=14, fontweight='bold', color='black', pad=10)
-    plt.xlabel('Years', fontsize=12, fontweight='bold', color='black', labelpad=8)
-    plt.ylabel(f'Return', fontsize=12, fontweight='bold', color='black', labelpad=8)
+              fontsize = 14, fontweight = 'bold', color='black', pad = 10)
+    plt.xlabel('Years', fontsize = 12, fontweight = 'bold', color = 'black', labelpad = 8)
+    plt.ylabel(f'Return', fontsize = 12, fontweight = 'bold', color = 'black', labelpad = 8)
     plt.legend(loc='upper left')
 
     # Disable grid
@@ -269,7 +268,7 @@ def plot_results(investment_parameters: Dict[str, Any], investment_growth: Tuple
     plt.tight_layout()
 
     # Save plot as an image (JPG format)
-    plt.savefig('Compound_investment_growth.jpg', dpi=500)
+    plt.savefig('Compound_investment_growth.jpg', dpi = 500)
     plt.close()
 
 # Display of DataFrame summary table with formatted output
@@ -291,7 +290,7 @@ def formatted_output(investment_parameters: Dict[str, Any], df_matrix: pd.DataFr
     print(f'\n{f' Compound Investment in {currency_types[selected_currency]}s ':-^{width}}')
 
     # Print table of the dataframe
-    print(f'\n{tabulate(formatted_matrix_df, headers='keys', tablefmt='grid', colalign=['center'] * len(formatted_matrix_df.columns), showindex=False)}')
+    print(f'\n{tabulate(formatted_matrix_df, headers = 'keys', tablefmt = 'grid', stralign = 'center', showindex = False)}')
 
 '''
 # Compound investment metrics as a heatmap

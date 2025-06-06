@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import Exchange_Rate_API as exrAPI
+import exchange_rate_api as exrAPI
 from colorama import Fore, Style, init
 from matplotlib.ticker import FuncFormatter
 from tabulate import tabulate
