@@ -1,55 +1,106 @@
 """
-Script Name: reverse_discounted_cash_flow.py
+reverse_discounted_cash_flow.py
+-----------------------------------------------------------------------
+Estimate the implied growth rate of a publicly traded company
+from its stock price using a reverse discounted cash flow (DCF) model.
 
-Description:
-This script develops machine learning models to predict how likely a particular person is in developing cardiovascular diseases.
-It reads data from a CSV file and trains three models: Linear Regression, Decision Tree, and a Neural Network.
-For each model, it computes evaluation metrics including accuracy, precision, and recall.
-After selecting the best-performing model, the script analyzes the most important features contributing to the prediction.
+Inputs
+-----------------------------------------------------------------------
+- Company name : str
+- Trading currency : str
+- Stock price : float
+- Outstanding shares : int
+- Last twelve months free cash flow (FCF) : float
 
-Dependencies:
+Process
+-----------------------------------------------------------------------
+- Compute implied growth rates over a 10-year horizon
+  for combinations of discount rates and terminal growth rates.
+- Solve reverse DCF numerically (Monte Carlo approach).
+- Generate heatmaps of implied growth rates.
+
+Dependencies
+-----------------------------------------------------------------------
 - pandas
 - numpy
+- scipy
+- seaborn
 
-Usage:
-$ python3 reverse_discounted_cash_flow.py
+Usage
+-----------------------------------------------------------------------
+$ python reverse_discounted_cash_flow.py
 
-Author: Riccardo Nicolò Iorio
-Date:
+Author
+-----------------------------------------------------------------------
+Riccardo Nicolò Iorio
+
+Date
+-----------------------------------------------------------------------
+2025-02-20
 """
 
-import time
-from functools import wraps
-from typing import Any, Callable, Dict, Tuple
 
-import numpy as np
-import pandas as pd
-import utils
-from colorama import Fore, init
-from tabulate import tabulate
+# -------------------------------------------------------- #
+#                       SCRIPT VERSION
+# -------------------------------------------------------- #
 
-#
 
-# Set display options
-pd.set_option('display.width', 500)  # Increase the display width
-pd.set_option('display.max_columns', None)  # Ensure all columns are displayed
+# Version History
+# ---------------
+# v1.0  2025-02-20  Initial version
 
-#Constants
-rDCF_years: int = 10
-num_simulations: int = int(1e6)
+
+# -------------------------------------------------------- #
+#                       LIBRARIES
+# -------------------------------------------------------- #
+
+
+# Standard Libraries
+from typing import Any, Dict, Tuple     # Type annotation
+
+# Third-party Libraries
+import numpy as np                      # Numerical computation
+import pandas as pd                     # Data manipulation
+from scipy import optimize as opt       # Numerical optimisers
+from tabulate import tabulate           # Visualisation (heatmap)
+from colorama import Fore, init         # Bash coloring
+
+# Local modules
+import utils                            # Custom helper function
+
+
+# -------------------------------------------------------- #
+#                  BASH DISPLAY OPTIONS
+# -------------------------------------------------------- #
 
 # Initialize colorama
 init(autoreset=True)
 
-# Terminal growth and discount rate assumptions
-terminal_growth_rates: Dict[int, str] = {          # Terminal growth rates assumptions
+# Set display options for DataFrame
+pd.set_option('display.width', 500)             # Increase the display width
+pd.set_option('display.max_columns', None)      # Ensure all columns of the DataFrame are displayed
+
+# -------------------------------------------------------- #
+#                       MODEL CONSTANTS
+# -------------------------------------------------------- #
+
+
+# Projection Years
+rDCF_years: int = 10
+
+# Number of simulation for running the Monte-Carlo method
+num_simulations: int = int(1e6)
+
+# Terminal growth rates assumptions
+terminal_growth_rates: Dict[int, str] = {
         1: 'Minimal Growth',                       # 1% - low growth
         2: 'Moderate Growth',                      # 2% - moderate growth
         3: 'Accelerated Growth',                   # 3% - high growth
         4: 'Exponential Growth'                    # 4% - very high growth
     }
 
-discount_rates: Dict[int, str] = {                # Discount rates assumption
+# Discount rates assumptions
+discount_rates: Dict[int, str] = {
         6: 'Capital Protection',                  # 6% - very low risk
         8: 'Low Volatility',                      # 8% - low risk
         10: 'Moderate Risk',                      # 10% - normal risk
@@ -65,6 +116,22 @@ currency_types: Dict[str, str] = {                # Available currency from API
         'CAD': 'Canadian Dollar'                  # Canadian Dollar
     }
 
+
+# -------------------------------------------------------- #
+#                  MODEL ASSUMPTIONS & NOTES
+# -------------------------------------------------------- #
+
+
+# - Projection horizon of the reversed discounted cash flow is fixed at 10 years
+# - Terminal value based is calculated according to Gordon Growth Model
+# - Discount rates aligned with average market values (5%–15%)
+# - Terminal growth rates aligned with average market values (1%–4%)
+
+
+# -------------------------------------------------------- #
+#                    USER DATA PROMPTS
+# -------------------------------------------------------- #
+
 # Prompts for user parameter selection
 prompts: Dict[str, str] = {
         'company_stock': 'Enter the stock ticker symbol of the company you want to analyze using the rDCF model: ',               # Company Ticker
@@ -74,66 +141,23 @@ prompts: Dict[str, str] = {
         'ltm_fcf': 'Enter the Free Cash Flow of the last twelve months (in billions, to two decimal places): ',                   # Free Cash Flow of the last 12 months
     }
 
-# Define numpy arrays for the discount and terminal growth rates (simple case)
-ds_rate = np.array(list(discount_rates.keys()))
-tg_rate = np.array(list(terminal_growth_rates.keys()))
 
-# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (simple case)
-dds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
-dtgr_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))
+# -------------------------------------------------------- #
+#                   USER DATA SELECTION
+# -------------------------------------------------------- #
 
-# Define numpy arrays for the discount and terminal growth rates (extended case)
-ext_ds_rate = np.linspace(ds_rate[0], ds_rate[-1], 10, endpoint = True)
-ext_tg_rate = np.linspace(tg_rate[0], tg_rate[-1], 7, endpoint = True)
-
-# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (extended case)
-cds_rate = (ext_ds_rate / 100).reshape(1, 1, len(ext_ds_rate), 1)
-ctg_rate = (ext_tg_rate / 100).reshape(1, 1, 1, len(ext_tg_rate))
-
-# Define a dictionary with entries containing discount and terminal growth rate for both simple and extended case
-simulation_rates = {
-    'simple': {'ds_rates': dds_rate, 'tgr_rates': dtgr_rate},
-    'extended': {'ds_rates': cds_rate, 'tgr_rates': ctg_rate}
-}
-
-# Time wrapper to measure function execution time
-def timer(func: Callable) -> Callable:
-    @wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
-        start_time: float = time.perf_counter()
-        result: Any = func(*args, **kwargs)
-        end_time: float = time.perf_counter()
-        print(f"Time for {func.__name__}: {end_time - start_time:.4f} seconds")
-
-        return result
-    return wrapper
-
-# Dictionary of user input parameters (e.g. {'company stock': 'Apple', 'currency': 'Euro', 'stock price': 200, 'outstanding shares': 1.2, 'LTM FCF': 3.4})
-#@timer
+#@utils.timer
 def input_stock_parameters() -> Dict[str, Any]:
+    """
+        This function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
+        functions to validate input and print on bash prompt selection
 
-    def input_choice(key_prompt:str, curr_dict : Dict[Any, Any], param: Dict[str, Any]) -> None:
-        curr_keys = list(curr_dict.keys())
-        for i, (sel_key, sel_type) in enumerate(curr_dict.items(), start=1):
-            print(f'{i}. {Fore.GREEN}{sel_key} {Fore.RESET}({sel_type})')
+        Argument:
+        No arguments
 
-        while key_prompt not in param:
-            try:
-                choice = int(input(f"Please enter the number corresponding to your selected {key_prompt}: ").strip())
-                if 1 <= choice <= len(curr_keys):
-                    param[key_prompt] = curr_keys[choice - 1]
-                else:
-                    raise ValueError("Invalid selection. Please choose a valid option.")
-            except ValueError as err:
-                print(f"Error: {err}")
-
-    def validation_numeric_input(key_prompt: str, value_prompt) -> None:
-        if key_prompt == 'stock_price' and value_prompt <= 0:
-            raise ValueError("The stock price of the company can not be less or equal to 0")
-        if key_prompt == 'outstanding_shares' and value_prompt <= 0:
-            raise ValueError("The number of outstanding shares can not be less or equal to 0")
-        if key_prompt == 'ltm_fcf' and value_prompt <= 0:
-            raise ValueError("The Free Cash Flow of the last twelve months can not be less or equal to 0")
+        Returns:
+        parameters -- Dictionary with key-value pairs based on the selection prompts
+    """
 
     parameters: Dict[str, Any] = {}
 
@@ -146,17 +170,45 @@ def input_stock_parameters() -> Dict[str, Any]:
                     parameters[key] = value
                 elif key == 'currency':
                     print(prompts[key])
-                    input_choice(key, currency_types, parameters)
+                    utils.input_choice(key, currency_types, parameters)
                 else:
                     value = float(input(prompt).strip())
-                    validation_numeric_input(key, value)
+                    utils.validation_numeric_input(key, value)
                     parameters[key] = value
             except ValueError as e:
                 print(f"Error: {e}")
     return parameters
 
+
+# -------------------------------------------------------- #
+#              REVERSE DISCOUNTED CASH FLOW MODEL
+# -------------------------------------------------------- #
+
+# Define numpy arrays for the discount and terminal growth rates (simple case)
+ds_rate = np.array(list(discount_rates.keys()))
+tg_rate = np.array(list(terminal_growth_rates.keys()))
+
+# # Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (simple case)
+# new_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
+# new_tgr_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))
+
+# Define numpy arrays for the discount and terminal growth rates in the range
+ext_ds_rate = np.linspace(ds_rate[0], ds_rate[-1], 10, endpoint = True)
+ext_tg_rate = np.linspace(tg_rate[0], tg_rate[-1], 7, endpoint = True)
+
+# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (extended case)
+new_ext_ds_rate = (ext_ds_rate / 100).reshape(1, 1, len(ext_ds_rate), 1)
+new_ext_tg_rate = (ext_tg_rate / 100).reshape(1, 1, 1, len(ext_tg_rate))
+
+# Define a dictionary with entries containing discount and terminal growth rate for both simple and extended case
+simulation_rates = {
+    #'simple': {'ds_rates': new_ds_rate, 'tgr_rates': new_tgr_rate},
+    'extended': {'ds_rates': new_ext_ds_rate, 'tgr_rates': new_ext_tg_rate}
+}
+
+
 # Function to calculate the projected free cash flows of the company for the time period selected (e.g. 10 years)
-#@timer
+#@utils.timer
 def projected_free_cash_flow(stock_parameters: Dict[str, Any], growth_rate: np.ndarray)-> Tuple[np.ndarray, np.ndarray]:
 
     time_period = np.arange(1, rDCF_years + 1).reshape(1, rDCF_years, 1, 1)
@@ -165,7 +217,7 @@ def projected_free_cash_flow(stock_parameters: Dict[str, Any], growth_rate: np.n
     return time_period, fcf_t
 
 # Function to calculate the present value of the free cash flows for the time period selected (e.g. 10 years)
-#@timer
+#@utils.timer
 def present_value_free_cash_flow(discount_rate: np.ndarray, projected_fcf: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
 
     time_period, fcf_t = projected_fcf
@@ -173,7 +225,7 @@ def present_value_free_cash_flow(discount_rate: np.ndarray, projected_fcf: Tuple
     return np.sum(pv_tfcf, axis = 1)
 
 # Function to calculate the discounted terminal value of the company
-#@timer
+#@utils.timer
 def discounted_terminal_value(discount_rate:np.ndarray, terminal_growth:np.ndarray, projected_fcf: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
 
     _, fcf_t = projected_fcf
@@ -182,7 +234,7 @@ def discounted_terminal_value(discount_rate:np.ndarray, terminal_growth:np.ndarr
     return pv_terminal_value
 
 # Function to calculate the total present value of cash flows and the intrinsic value per share of the company
-#@timer
+#@utils.timer
 def intrinsic_value_share(stock_parameters: Dict[str, Any], discounted_fcf: np.ndarray, discounted_tv: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
 
     total_present_value = discounted_fcf + discounted_tv
@@ -190,7 +242,7 @@ def intrinsic_value_share(stock_parameters: Dict[str, Any], discounted_fcf: np.n
     return total_present_value, intrinsic_value_per_share
 
 # Function to calculate the intrinsic value per share (adjusted to use random growth rate)
-#@timer
+#@utils.timer
 def calculate_intrinsic_value(discount_rate:np.ndarray, terminal_growth:np.ndarray, stock_parameters: Dict[str, Any], growth_rate: np.ndarray) -> np.ndarray:
 
     # Calculate projected FCF for each year
@@ -207,7 +259,7 @@ def calculate_intrinsic_value(discount_rate:np.ndarray, terminal_growth:np.ndarr
 
     return intrinsic_value_per_share
 
-#@timer
+#@utils.timer
 # Monte Carlo simulation to estimate the range of intrinsic values
 def monte_carlo_simulation(stock_parameters: Dict[str, Any], discount_rate:np.ndarray, terminal_growth:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -228,7 +280,7 @@ def monte_carlo_simulation(stock_parameters: Dict[str, Any], discount_rate:np.nd
     return best_growth_rate, min_error
 
 # Creating a DataFrame summary table of the implied growth rates for each value of terminal growth and discount rate
-#timer
+#@utils.timer
 def implied_growth_rates_pd(stock_parameters: Dict[str, Any], discount_rate:np.ndarray, terminal_growth:np.ndarray, case: str) -> pd.DataFrame:
 
     # Vectorized computation by applying monte_carlo_simulation across all discount and terminal growth rate pairs
@@ -260,7 +312,7 @@ def implied_growth_rates_pd(stock_parameters: Dict[str, Any], discount_rate:np.n
     return growth_rate_dataframe.astype(float)
 
 # Display of DataFrame summary table with formatted output
-#@timer
+#@utils.timer
 def formatted_output(stock_parameters: Dict[str, Any], df_matrix: pd.DataFrame) -> None:
 
     # List of columns to format
@@ -268,7 +320,7 @@ def formatted_output(stock_parameters: Dict[str, Any], df_matrix: pd.DataFrame) 
 
     # Calculate the width based on the column names only
     width = sum(len(str(col)) for col in terminal_growth_rates.items()) + len(df_matrix.columns) + len(stock_parameters['company_stock']) + 20
-    print(f'\n{f' Reverse Discounted Cash Flow - {stock_parameters['company_stock']} ':-^{width}}')
+    print(f"\n{f" Reverse Discounted Cash Flow - {stock_parameters['company_stock']} ":-^{width}}")
 
     # Print table of the dataframe
     print(f'\n{tabulate(formatted_matrix_df, headers ='keys', tablefmt ='grid', stralign = 'center', showindex = True)}')
