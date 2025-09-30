@@ -2,7 +2,8 @@
 reverse_discounted_cash_flow.py
 -----------------------------------------------------------------------
 Estimate the implied growth rate of a publicly traded company
-from its stock price using a reverse discounted cash flow (DCF) model.
+from its stock price using a reverse discounted cash flow (DCF) model,
+for positive free cash flow (FCF).
 
 Inputs
 -----------------------------------------------------------------------
@@ -24,7 +25,6 @@ Dependencies
 - pandas
 - numpy
 - scipy
-- seaborn
 
 Usage
 -----------------------------------------------------------------------
@@ -39,24 +39,20 @@ Date
 2025-02-20
 """
 
-
 # -------------------------------------------------------- #
 #                       SCRIPT VERSION
 # -------------------------------------------------------- #
 
-
 # Version History
 # ---------------
-# v1.0  2025-02-20  Initial version
-# v1.1  2025-03-10  Second Version
-# v1.2  2025-06-12  Third Version
-# v1.3  2025-09-26  Fourth Version
-
+# v1.0  2025-03-21  Initial version
+# v1.1  2025-04-13  Second Version
+# v1.2  2025-06-17  Third Version
+# v1.3  2025-09-23  Fourth Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
 # -------------------------------------------------------- #
-
 
 # Standard Libraries
 from typing import Any, Dict, Tuple     # Type annotation
@@ -70,7 +66,6 @@ from colorama import Fore, init         # Bash coloring
 
 # Local modules
 import utils                            # Custom helper function
-
 
 # -------------------------------------------------------- #
 #                  BASH DISPLAY OPTIONS
@@ -86,7 +81,6 @@ pd.set_option('display.max_columns', None)      # Ensure all columns of the Data
 # -------------------------------------------------------- #
 #                       MODEL CONSTANTS
 # -------------------------------------------------------- #
-
 
 # Projection Years
 rDCF_years: int = 10
@@ -119,7 +113,6 @@ currency_types: Dict[str, str] = {                # Available currency from API
         'CAD': 'Canadian Dollar'                  # Canadian Dollar
     }
 
-
 # -------------------------------------------------------- #
 #                  MODEL ASSUMPTIONS & NOTES
 # -------------------------------------------------------- #
@@ -144,7 +137,6 @@ prompts: Dict[str, str] = {
         'ltm_fcf': 'Enter the Free Cash Flow of the last twelve months (in billions, to two decimal places): ',                   # Free Cash Flow of the last 12 months
     }
 
-
 # -------------------------------------------------------- #
 #                   USER DATA SELECTION
 # -------------------------------------------------------- #
@@ -155,16 +147,16 @@ def input_stock_parameters() -> Dict[str, Any]:
         This function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
         functions to validate input and print on bash prompt selection
 
-        Argument:
+        Arguments:
         No arguments
 
         Returns:
-        parameters -- Dictionary with key-value pairs based on the selection prompts
+        parameters -- Dictionary with key-value pairs based on the selection prompts from the user
     """
 
     parameters: Dict[str, Any] = {}
 
-    # Inputs validation for remaining prompts, namely company stock ticker,
+    # Validation of user selections based on the predefined prompts dictionary
     for key, prompt in prompts.items():
         while key not in parameters:
             try:
@@ -173,13 +165,14 @@ def input_stock_parameters() -> Dict[str, Any]:
                     parameters[key] = value
                 elif key == 'currency':
                     print(prompts[key])
-                    utils.input_choice(key, currency_types, parameters)
+                    utils.input_choice(key, currency_types, parameters)      # User's currency selection validation
                 else:
                     value = float(input(prompt).strip())
-                    utils.validation_numeric_input(key, value)
+                    utils.validation_numeric_input(key, value)               # User's numeric input validation
                     parameters[key] = value
             except ValueError as e:
                 print(f"Error: {e}")
+
     return parameters
 
 
@@ -188,25 +181,24 @@ def input_stock_parameters() -> Dict[str, Any]:
 # -------------------------------------------------------- #
 
 # Define numpy arrays for the discount and terminal growth rates (simple case)
-ds_rate = np.array(list(discount_rates.keys()))
-tg_rate = np.array(list(terminal_growth_rates.keys()))
+model_ds_rate = np.array(list(discount_rates.keys()))
+model_tg_rate = np.array(list(terminal_growth_rates.keys()))
 
 # # Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (simple case)
 # new_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
-# new_tgr_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))
+# new_tgr_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))®
 
 # Define numpy arrays for the discount and terminal growth rates in the range
-ext_ds_rate = np.linspace(ds_rate[0], ds_rate[-1], 10, endpoint = True)
-ext_tg_rate = np.linspace(tg_rate[0], tg_rate[-1], 7, endpoint = True)
+ds_rate = np.linspace(model_ds_rate[0], model_ds_rate[-1], 10, endpoint = True)
+tg_rate = np.linspace(model_tg_rate[0], model_tg_rate[-1], 7, endpoint = True)
 
-# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (extended case)
-new_ext_ds_rate = (ext_ds_rate / 100).reshape(1, 1, len(ext_ds_rate), 1)
-new_ext_tg_rate = (ext_tg_rate / 100).reshape(1, 1, 1, len(ext_tg_rate))
+# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting
+ndim_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
+ndim_tg_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))
 
 # Define a dictionary with entries containing discount and terminal growth rate for both simple and extended case
 simulation_rates = {
-    #'simple': {'ds_rates': new_ds_rate, 'tgr_rates': new_tgr_rate},
-    'extended': {'ds_rates': new_ext_ds_rate, 'tgr_rates': new_ext_tg_rate}
+    'implied_growth_rates': {'ds_rates': ndim_ds_rate, 'tgr_rates': ndim_tg_rate}
 }
 
 
@@ -301,8 +293,8 @@ def implied_growth_rates_pd(stock_parameters: Dict[str, Any], discount_rate:np.n
         growth_rate_dataframe[:] = implied_growth_rates
     else:
         # Numpy array for the discount and terminal growth rates (extended case)
-        ext_ds_rates_labels = [f"{rates:.0f}%" for rates in ext_ds_rate]
-        ext_tgr_rates_labels = [f"{rates:.1f}%" for rates in ext_tg_rate]
+        ext_ds_rates_labels = [f"{rates:.0f}%" for rates in ds_rate]
+        ext_tgr_rates_labels = [f"{rates:.1f}%" for rates in tg_rate]
 
         # Create DataFrame with index and columns matching the extended case
         growth_rate_dataframe = pd.DataFrame(index = ext_ds_rates_labels, columns = ext_tgr_rates_labels)
@@ -334,10 +326,7 @@ def main() -> None:
     for label, rates in simulation_rates.items():
         dataframe = implied_growth_rates_pd(parameters, rates['ds_rates'], rates['tgr_rates'], label)
         formatted_output(parameters, dataframe)
-        if label == 'simple':
-            utils.plt_igr(parameters, dataframe)
-        else:
-            utils.ext_plt_igr(parameters, dataframe)
+        utils.plt_heatmap(parameters, dataframe)
 
 
 if __name__ == '__main__':
