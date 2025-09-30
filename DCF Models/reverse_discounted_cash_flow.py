@@ -180,17 +180,9 @@ def input_stock_parameters() -> Dict[str, Any]:
 #              REVERSE DISCOUNTED CASH FLOW MODEL
 # -------------------------------------------------------- #
 
-# Define numpy arrays for the discount and terminal growth rates (simple case)
-model_ds_rate = np.array(list(discount_rates.keys()))
-model_tg_rate = np.array(list(terminal_growth_rates.keys()))
-
-# # Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting (simple case)
-# new_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
-# new_tgr_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))®
-
 # Define numpy arrays for the discount and terminal growth rates in the range
-ds_rate = np.linspace(model_ds_rate[0], model_ds_rate[-1], 10, endpoint = True)
-tg_rate = np.linspace(model_tg_rate[0], model_tg_rate[-1], 7, endpoint = True)
+ds_rate = np.linspace(min(discount_rates), max(discount_rates), 10, endpoint = True)
+tg_rate = np.linspace(min(terminal_growth_rates), max(terminal_growth_rates), 7, endpoint = True)
 
 # Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting
 ndim_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
