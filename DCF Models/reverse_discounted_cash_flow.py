@@ -144,14 +144,14 @@ prompts: Dict[str, str] = {
 #@utils.timer
 def input_stock_parameters() -> Dict[str, Any]:
     """
-        This function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
+        The function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
         functions to validate input and print on bash prompt selection
 
         Arguments:
-        No arguments
+            No arguments
 
         Returns:
-        parameters -- Dictionary with key-value pairs based on the selection prompts from the user
+            parameters (Dict[str, Any]) -- Dictionary containing stock-specific parameters based on user input
     """
 
     parameters: Dict[str, Any] = {}
@@ -180,52 +180,109 @@ def input_stock_parameters() -> Dict[str, Any]:
 #              REVERSE DISCOUNTED CASH FLOW MODEL
 # -------------------------------------------------------- #
 
-# Define numpy arrays for the discount and terminal growth rates in the range
+# Numpy arrays for the discount and terminal growth rates in the range
 ds_rate = np.linspace(min(discount_rates), max(discount_rates), 10, endpoint = True)
 tg_rate = np.linspace(min(terminal_growth_rates), max(terminal_growth_rates), 7, endpoint = True)
 
-# Define reshaped numpy arrays of the discount and terminal growth rates for broadcasting
+# Reshaped numpy arrays of the discount and terminal growth rates for broadcasting
 ndim_ds_rate = (ds_rate / 100).reshape(1, 1, len(ds_rate), 1)
 ndim_tg_rate = (tg_rate / 100).reshape(1, 1, 1, len(tg_rate))
 
-# Define a dictionary with entries containing discount and terminal growth rate for both simple and extended case
+# Dictionary with entries containing discount and terminal growth rates
 simulation_rates = {
     'implied_growth_rates': {'ds_rates': ndim_ds_rate, 'tgr_rates': ndim_tg_rate}
 }
 
-
 # Function to calculate the projected free cash flows of the company for the time period selected (e.g. 10 years)
 #@utils.timer
 def projected_free_cash_flow(stock_parameters: Dict[str, Any], growth_rate: np.ndarray)-> Tuple[np.ndarray, np.ndarray]:
+    """
+        The function calculates the projected free cash flow (FCF) matrix for a given time period and set of growth rates
+
+        Arguments:
+            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            growth_rate (np.ndarray): Array of shape (n_simulations,) containing random growth rates
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]:
+                -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
+                -- free_cash_flow (np.ndarray): Array of shape (n_simulations, n_years, 1, 1) containing the projected FCF for each simulated growth
+                                                rate over the time period
+    """
 
     time_period = np.arange(1, rDCF_years + 1).reshape(1, rDCF_years, 1, 1)
     decimal_growth_rate = growth_rate.reshape(-1, 1, 1, 1) / 100
-    fcf_t = stock_parameters['ltm_fcf'] * ((1 + decimal_growth_rate) ** time_period)
-    return time_period, fcf_t
+    free_cash_flow = stock_parameters['ltm_fcf'] * ((1 + decimal_growth_rate) ** time_period)
 
-# Function to calculate the present value of the free cash flows for the time period selected (e.g. 10 years)
+    return time_period, free_cash_flow
+
 #@utils.timer
 def present_value_free_cash_flow(discount_rate: np.ndarray, projected_fcf: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    """
+        The function calculates present value (PV) of the free cash flow (FCF) matrix for a given time period and set of growth rates
 
-    time_period, fcf_t = projected_fcf
-    pv_tfcf = fcf_t / ((1 + discount_rate) ** time_period)
-    return np.sum(pv_tfcf, axis = 1)
+        Arguments:
+            discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
+            projected_fcf (Tuple[np.ndarray, np.ndarray]): Array of shape (n_simulations, n_years, 1, 1) containing the projected FCF
+                                                             for each simulated growth rate over the time period
 
-# Function to calculate the discounted terminal value of the company
+        Returns:
+            np.ndarray: Array of shape (n_simulations, 1, ndim_ds_rate, 1) representing the present value of the FCF
+                          for each simulation over the time period
+    """
+
+    time_period, free_cash_flow = projected_fcf
+    present_value_fcf = free_cash_flow / ((1 + discount_rate) ** time_period)
+
+    return np.sum(present_value_fcf, axis = 1)
+
 #@utils.timer
-def discounted_terminal_value(discount_rate:np.ndarray, terminal_growth:np.ndarray, projected_fcf: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+def discounted_terminal_value(discount_rate: np.ndarray, terminal_growth_rate: np.ndarray, projected_fcf: Tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    """
+        The function calculates the terminal value (TV) of the free cash flow (FCF) matrix for a given time period and set of growth rates
 
-    _, fcf_t = projected_fcf
-    terminal_value_fcf_t = fcf_t[:, -1, :, :] * (1 + terminal_growth[:, -1, :, :]) / (discount_rate[:, -1, :, :] - terminal_growth[:, -1, :, :])
-    pv_terminal_value = terminal_value_fcf_t / ((1 + discount_rate[:, -1, :, :]) ** rDCF_years)
-    return pv_terminal_value
+        Arguments:
+            discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
+            terminal_growth_rate (np.ndarray): Array of shape (1, 1, 1, ndim_tg_rate) containing the assumed terminal growth rates
+            projected_fcf (Tuple[np.ndarray, np.ndarray]): Tuple of two arrays
+                -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
+                -- free_cash_flow (np.ndarray): Array of shape (n_simulations, n_years, 1, 1) containing the projected FCF for each simulated growth
+                                                rate over the time period
 
-# Function to calculate the total present value of cash flows and the intrinsic value per share of the company
+        Returns:
+            np.ndarray: Array of shape (n_simulations, 1, ndim_ds_rate, ndim_tg_rate) representing the present value of the
+                                                   terminal value for each simulation over the time period
+        """
+
+    _, free_cash_flow = projected_fcf
+    terminal_value_fcf = free_cash_flow[:, -1, :, :] * (1 + terminal_growth_rate[:, -1, :, :]) / (discount_rate[:, -1, :, :] - terminal_growth_rate[:, -1, :, :])
+    present_terminal_value = terminal_value_fcf / ((1 + discount_rate[:, -1, :, :]) ** rDCF_years)
+
+    return present_terminal_value
+
 #@utils.timer
 def intrinsic_value_share(stock_parameters: Dict[str, Any], discounted_fcf: np.ndarray, discounted_tv: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+        The function calculates the total present value (PV) of the terminal value (TV) of the free cash flow (FCF) matrix
+        and the intrinsic value per share for a given time period and set of growth rates
+
+        Arguments:
+            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            discounted_fcf (np.ndarray): Array of shape (n_simulations, 1, ndim_ds_rate, 1) representing the present value of the FCF
+                                         for each simulation over the time period
+            discounted_tv (np.ndarray): Array of shape (n_simulations, 1, ndim_ds_rate, ndim_tg_rate) representing the present value of the
+                                        terminal value for each simulation over the time period
+
+            Returns:
+                Tuple[np.ndarray, np.ndarray]:
+                    np.ndarray: Array of shape (n_simulations, 1, ndim_ds_rate, ndim_tg_rate) representing the present value of the
+                                total present value for each simulation over the time period
+                    np.ndarray: Array representing the intrinsic value per share computed from the total PV
+    """
 
     total_present_value = discounted_fcf + discounted_tv
     intrinsic_value_per_share = total_present_value / stock_parameters['outstanding_shares']
+
     return total_present_value, intrinsic_value_per_share
 
 # Function to calculate the intrinsic value per share (adjusted to use random growth rate)

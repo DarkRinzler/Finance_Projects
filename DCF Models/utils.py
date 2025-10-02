@@ -58,10 +58,10 @@ def timer(func: Callable) -> Callable:
         Decorator that measures the execution time of a function.
 
         Arguments:
-        func (Callable) - Function to be timed
+            func (Callable) -- Function to be timed
 
         Returns:
-        Callable: A wrapped version of the input function that measures and reports its execution time when called.
+            Callable -- A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -80,15 +80,15 @@ def timer(func: Callable) -> Callable:
 
 def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: Dict[str, Any]) -> None:
     """
-        This function prints the available currency options in color and validates the user's selection
+        The function prints the available currency options in color and validates the user's selection
 
         Arguments:
-        key_prompt (str) - Dictionary key corresponding to the currency numerical value in the prompts dictionary
-        stock_parameters (Dict[Any, Any]) - Dictionary containing the available currency options
-        parameters (Dict[Any, Any]) - Dictionary used to store the user's selected options based on the prompts
+            key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
+            stock_parameters (Dict[Any, Any]): Dictionary containing the available currency options
+            parameters (Dict[Any, Any]): Dictionary used to store the user's selected options based on the prompts
 
         Returns:
-        None
+            None
     """
 
     curr_keys = list(stock_parameters.keys())
@@ -107,15 +107,15 @@ def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: 
 
 def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
     """
-        This function checks if the numerical inputs of the user are consistent with the assumptions of the reverse
+        The function checks if the numerical inputs of the user are consistent with the assumptions of the reverse
         discounted cash flow model of the script reverse_discounted_cash_flow.py
 
         Arguments:
-        key_prompt (str) - Dictionary key corresponding to a numerical value in the prompts dictionary
-        value_prompt (float) - Numerical value associated with key_prompt key in the prompts dictionary
+            key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
+            value_prompt (float): Numerical value associated with key_prompt key in the prompts dictionary
 
         Returns:
-        None
+            None
     """
 
     if key_prompt == 'stock_price' and value_prompt <= 0:
@@ -131,14 +131,14 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
 
 def plt_heatmap(stock_parameters: Dict[str, Any], growth_rates: pd.DataFrame) -> None:
     """
-        This function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
+        The function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
 
         Arguments:
-        stock_parameters (Dict[str, Any]) - Dictionary containing the user's company selection
-        growth_rates - Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
+            stock_parameters (Dict[str, Any]): Dictionary containing the user's company selection
+            growth_rates: Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
 
         Returns:
-        None
+            None
     """
 
     # Remove the DataFrame index before plotting Heat-Map
