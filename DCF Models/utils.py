@@ -69,7 +69,7 @@ def timer(func: Callable) -> Callable:
         start_time: float = time.perf_counter()
         result: Any = func(*args, **kwargs)
         end_time: float = time.perf_counter()
-        print(f"Time for {func.__name__}: {end_time - start_time:.4f} seconds")
+        print(f"Time for {func.__name__} function: {end_time - start_time:.4f} seconds")
 
         return result
     return wrapper
@@ -84,7 +84,9 @@ def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: 
 
         Arguments:
             key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
+
             stock_parameters (Dict[Any, Any]): Dictionary containing the available currency options
+
             parameters (Dict[Any, Any]): Dictionary used to store the user's selected options based on the prompts
 
         Returns:
@@ -112,6 +114,7 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
 
         Arguments:
             key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
+
             value_prompt (float): Numerical value associated with key_prompt key in the prompts dictionary
 
         Returns:
@@ -135,6 +138,7 @@ def plt_heatmap(stock_parameters: Dict[str, Any], growth_rates: pd.DataFrame) ->
 
         Arguments:
             stock_parameters (Dict[str, Any]): Dictionary containing the user's company selection
+
             growth_rates: Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
 
         Returns:
