@@ -26,7 +26,7 @@ Date
 # -------------------------------------------------------- #
 
 # Version History
-# ---------------
+# -------------------------------------------------------- #
 # v1.0  2025-02-20  Initial version
 # v1.3  2025-09-26  Second Version
 
@@ -58,9 +58,11 @@ def timer(func: Callable) -> Callable:
         Decorator that measures the execution time of a function.
 
         Arguments:
+
             func (Callable) -- Function to be timed
 
         Returns:
+
             Callable -- A wrapped version of the input function that measures and reports its execution time when called.
     """
 
@@ -83,6 +85,7 @@ def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: 
         The function prints the available currency options in color and validates the user's selection
 
         Arguments:
+
             key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
             stock_parameters (Dict[Any, Any]): Dictionary containing the available currency options
@@ -90,6 +93,7 @@ def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: 
             parameters (Dict[Any, Any]): Dictionary used to store the user's selected options based on the prompts
 
         Returns:
+
             None
     """
 
@@ -113,11 +117,13 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
         discounted cash flow model of the script reverse_discounted_cash_flow.py
 
         Arguments:
+
             key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
 
             value_prompt (float): Numerical value associated with key_prompt key in the prompts dictionary
 
         Returns:
+
             None
     """
 
@@ -137,11 +143,13 @@ def plt_heatmap(stock_parameters: Dict[str, Any], growth_rates: pd.DataFrame) ->
         The function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
 
         Arguments:
+
             stock_parameters (Dict[str, Any]): Dictionary containing the user's company selection
 
             growth_rates: Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
 
         Returns:
+
             None
     """
 
