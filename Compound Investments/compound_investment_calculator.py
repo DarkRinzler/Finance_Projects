@@ -1,10 +1,9 @@
 """
 compound_investment_calculator.py
 -----------------------------------------------------------------------
-Estimate the implied growth rate of a publicly traded company
-from its stock price using a reverse discounted cash flow (DCF) model,
-for positive free cash flow (FCF).
-
+Forecast compounded investment metrics, including returns, costs, profit,
+ROI, and profit margin, for a given financial instrument based on its
+average annual return, monthly contributions, and investment period.
 Inputs
 -----------------------------------------------------------------------
 - Currency : str
@@ -15,10 +14,9 @@ Inputs
 
 Process
 -----------------------------------------------------------------------
-- Compute implied growth rates over a 10-year horizon
-  for combinations of discount rates and terminal growth rates.
-- Solve reverse DCF numerically (Monte Carlo approach).
-- Generate heatmaps of implied growth rates.
+- Calculate the projected investment growth and associated costs over time
+- Generate a DataFrame summarizing key investment metrics
+- Produce a plot visualizing the forecasted returns and costs
 
 Dependencies
 -----------------------------------------------------------------------

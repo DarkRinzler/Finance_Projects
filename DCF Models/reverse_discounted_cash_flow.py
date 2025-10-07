@@ -3,7 +3,7 @@ reverse_discounted_cash_flow.py
 -----------------------------------------------------------------------
 Estimate the implied growth rate of a publicly traded company
 from its stock price using a reverse discounted cash flow (DCF) model,
-for positive free cash flow (FCF).
+for positive free cash flow (FCF)
 
 Inputs
 -----------------------------------------------------------------------
@@ -16,9 +16,9 @@ Inputs
 Process
 -----------------------------------------------------------------------
 - Compute implied growth rates over a 10-year horizon
-  for combinations of discount rates and terminal growth rates.
-- Solve reverse DCF numerically (Monte Carlo approach).
-- Generate heatmaps of implied growth rates.
+  for combinations of discount rates and terminal growth rates
+- Solve reverse DCF numerically (Monte Carlo approach)
+- Generate heatmaps of implied growth rates
 
 Dependencies
 -----------------------------------------------------------------------
