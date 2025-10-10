@@ -34,7 +34,6 @@ Date
 # -------------------------------------------------------- #
 
 # Standard libraries
-from typing import Any, Tuple, Dict, Callable       # Type annotation
 import time                                         # Time
 from functools import wraps                         # Wrapper
 
@@ -51,7 +50,7 @@ init(autoreset=True)
 #                       WRAPPERS
 # -------------------------------------------------------- #
 
-def timer(func: Callable) -> Callable:
+def timer(func: callable) -> callable:
     """
         Decorator that measures the execution time of a function.
 
@@ -65,9 +64,9 @@ def timer(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args, **kwargs) -> any:
         start_time: float = time.perf_counter()
-        result: Any = func(*args, **kwargs)
+        result: any = func(*args, **kwargs)
         end_time: float = time.perf_counter()
         print(f"Time for {func.__name__} function: {end_time - start_time:.4f} seconds")
 
@@ -78,7 +77,7 @@ def timer(func: Callable) -> Callable:
 #                       USER SELECTION
 # -------------------------------------------------------- #
 
-def input_choice(key_prompt: str, currency_types: Dict[Any, Any], parameters: Dict[str, Any]) -> None:
+def input_choice(key_prompt: str, currency_types: dict[any, any], parameters: dict[str, any]) -> None:
     """
         The function prints the available currency options in color and validates the user's selection
 
@@ -139,7 +138,7 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
 #                       PLOTTING
 # -------------------------------------------------------- #
 
-def plt_investment(investment_parameters: Dict[str, Any], investment_growth: Tuple[np.ndarray, np.ndarray], months_in_year: int) -> None:
+def plt_investment(investment_parameters: dict[str, any], investment_growth: tuple[np.ndarray, np.ndarray], months_in_year: int) -> None:
     """
         The function plots the yearly forecast of the user's selected financial instrument, displaying both the projected returns and costs,
         highlighting every 5 years the corresponding return and cost values

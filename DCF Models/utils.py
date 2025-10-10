@@ -35,7 +35,6 @@ Date
 # -------------------------------------------------------- #
 
 # Standard libraries
-from typing import Any, Dict, Callable       # Type annotation
 import time                                  # Time
 from functools import wraps                  # Wrapper
 import math                                  # Math operations
@@ -53,7 +52,7 @@ init(autoreset=True)
 #                       WRAPPERS
 # -------------------------------------------------------- #
 
-def timer(func: Callable) -> Callable:
+def timer(func: callable) -> callable:
     """
         Decorator that measures the execution time of a function.
 
@@ -67,9 +66,9 @@ def timer(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args, **kwargs) -> any:
         start_time: float = time.perf_counter()
-        result: Any = func(*args, **kwargs)
+        result: any = func(*args, **kwargs)
         end_time: float = time.perf_counter()
         print(f"Time for {func.__name__} function: {end_time - start_time:.4f} seconds")
 
@@ -80,7 +79,7 @@ def timer(func: Callable) -> Callable:
 #                       USER SELECTION
 # -------------------------------------------------------- #
 
-def input_choice(key_prompt: str, stock_parameters: Dict[Any, Any], parameters: Dict[str, Any]) -> None:
+def input_choice(key_prompt: str, stock_parameters: dict[any, any], parameters: dict[str, any]) -> None:
     """
         The function prints the available currency options in color and validates the user's selection
 
@@ -138,7 +137,7 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
 #                       PLOTTING
 # -------------------------------------------------------- #
 
-def plt_heatmap(stock_parameters: Dict[str, Any], growth_rates: pd.DataFrame) -> None:
+def plt_heatmap(stock_parameters: dict[str, any], growth_rates: pd.DataFrame) -> None:
     """
         The function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
 
