@@ -50,9 +50,6 @@ Date
 #                       LIBRARIES
 # -------------------------------------------------------- #
 
-# Standard libraries
-from typing import Any, Dict, Tuple
-
 # Third-party libraries
 import numpy as np
 import pandas as pd
@@ -61,7 +58,6 @@ from tabulate import tabulate
 # Local modules
 import utils                                  # Custom helper function
 import exchange_rate_api as exchange_api      # Exchange rate API custom helper function
-
 
 # -------------------------------------------------------- #
 #                  BASH DISPLAY OPTIONS
@@ -79,7 +75,7 @@ pd.set_option('display.max_columns', None)      # Ensure all columns of the Data
 months_in_year = 12
 
 # Currency symbols
-currency_symbols: Dict[str, str] = {
+currency_symbols: dict[str, str] = {
         'USD': '$',                             # United States Dollar
         'EUR': '€',                             # Euro
         'GBP': '£',                             # British Pound Sterling
@@ -87,7 +83,7 @@ currency_symbols: Dict[str, str] = {
         'CAD': '$'                              # Canadian Dollar
     }
 
-currency_types: Dict[str, str] = {
+currency_types: dict[str, str] = {
         'USD' : 'United States Dollar',
         'EUR' : 'Euro',
         'GBP' : 'British Pound Sterling',
@@ -107,7 +103,7 @@ currency_types: Dict[str, str] = {
 # -------------------------------------------------------- #
 
 # Prompts for user parameter selection
-prompts: Dict[str, str] = {
+prompts: dict[str, str] = {
         'currency' : 'Select the desired currency of the investment from the options below: ',                          # Currency of the desired investment
         'initial investment' : 'Enter the amount of the initial investment in EUR (€): ',                               # Initial investment
         'monthly contribution' : 'Enter the expected monthly contribution to the investment in EUR (€): ',              # Monthly contribution
@@ -120,7 +116,7 @@ prompts: Dict[str, str] = {
 # -------------------------------------------------------- #
 
 @utils.timer
-def investment_input_parameters() -> Dict[str, Any]:
+def investment_input_parameters() -> dict[str, any]:
     """
         The function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
         functions to validate input and print on bash prompt selection
@@ -134,7 +130,7 @@ def investment_input_parameters() -> Dict[str, Any]:
             parameters (Dict[str, Any]) -- Dictionary containing investment-specific parameters based on user input
     """
 
-    parameters: Dict[str, Any] = {}
+    parameters: dict[str, any] = {}
 
     # Handling of the currency selection
     print(prompts['currency'])
@@ -163,7 +159,7 @@ def investment_input_parameters() -> Dict[str, Any]:
 # -------------------------------------------------------- #
 
 @utils.timer
-def investment_values(investment_parameters: Dict[str, Any]) -> Tuple[float, int]:
+def investment_values(investment_parameters: dict[str, any]) -> tuple[float, int]:
     """
         Calculates the average monthly return rate of the user's selected financial instrument, based on its average annual return rate,
         and the total number of months in the chosen investment period for forecasting
@@ -193,7 +189,7 @@ def investment_values(investment_parameters: Dict[str, Any]) -> Tuple[float, int
     return return_rate, total_months
 
 @utils.timer
-def investment_data_forecasting(investment_parameters: Dict[str, Any], investment_data_values: Tuple[float, int]) -> Tuple[np.ndarray, np.ndarray]:
+def investment_data_forecasting(investment_parameters: dict[str, any], investment_data_values: tuple[float, int]) -> tuple[np.ndarray, np.ndarray]:
     """
         The function calculates the forecasted investment returns and costs within the selected investment period
 
@@ -248,7 +244,7 @@ def investment_data_forecasting(investment_parameters: Dict[str, Any], investmen
     return investment_returns, investment_costs
 
 @utils.timer
-def investment_forecasting(investment_parameters: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray]:
+def investment_forecasting(investment_parameters: dict[str, any]) -> tuple[np.ndarray, np.ndarray]:
     """
         The function calculates the forecasted investment returns and costs within the selected investment period by executing previously
         defined functions in succession
@@ -272,7 +268,7 @@ def investment_forecasting(investment_parameters: Dict[str, Any]) -> Tuple[np.nd
     return investment_forecasted_data
 
 @utils.timer
-def summary_table(investment_parameters: Dict[str, Any], investment_data_forecast: Tuple[np.ndarray, np.ndarray]) -> pd.DataFrame:
+def summary_table(investment_parameters: dict[str, any], investment_data_forecast: tuple[np.ndarray, np.ndarray]) -> pd.DataFrame:
     """
         The function generates a DataFrame of investment metrics — returns, costs, profit, profit margin, and return on investment — at 5-year intervals
 
@@ -331,7 +327,7 @@ def summary_table(investment_parameters: Dict[str, Any], investment_data_forecas
     return pd.DataFrame(interval_summary)
 
 @utils.timer
-def formatted_output(investment_parameters: Dict[str, Any], investment_metrics_df: pd.DataFrame) -> None:
+def formatted_output(investment_parameters: dict[str, any], investment_metrics_df: pd.DataFrame) -> None:
     """
         The function formats and displays the DataFrame with improved output readability
 
