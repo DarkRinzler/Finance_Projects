@@ -27,7 +27,8 @@ Date
 
 # Version History
 # -------------------------------------------------------- #
-# v1.0  2025-10-06  First Version
+# v1.0  2025-01-06  First Version
+# v1.1  2025-10-10  First Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -56,11 +57,11 @@ def timer(func: callable) -> callable:
 
         Arguments:
 
-            func (Callable) -- Function to be timed
+            func (callable) -- Function to be timed
 
         Returns:
 
-            Callable -- A wrapped version of the input function that measures and reports its execution time when called.
+            callable -- A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -85,9 +86,9 @@ def input_choice(key_prompt: str, currency_types: dict[any, any], parameters: di
 
             key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
-            currency_types (Dict[Any, Any]): Dictionary containing the available currency options
+            currency_types (dict[any, any]): Dictionary containing the available currency options
 
-            parameters (Dict[Any, Any]): Dictionary used to store the user's selected options based on the prompts
+            parameters (dict[any, any]): Dictionary used to store the user's selected options based on the prompts
 
         Returns:
 
@@ -145,9 +146,9 @@ def plt_investment(investment_parameters: dict[str, any], investment_growth: tup
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
-            investment_growth (Tuple[np.ndarray, np.ndarray]): Tuple of two arrays:
+            investment_growth (tuple[np.ndarray, np.ndarray]): Tuple of two arrays:
 
                 -- investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period

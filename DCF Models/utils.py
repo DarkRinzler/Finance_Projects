@@ -58,11 +58,11 @@ def timer(func: callable) -> callable:
 
         Arguments:
 
-            func (Callable) -- Function to be timed
+            func (callable) -- Function to be timed
 
         Returns:
 
-            Callable -- A wrapped version of the input function that measures and reports its execution time when called.
+            callable -- A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -87,9 +87,9 @@ def input_choice(key_prompt: str, stock_parameters: dict[any, any], parameters: 
 
             key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
-            stock_parameters (Dict[Any, Any]): Dictionary containing the available currency options
+            stock_parameters (dict[any, any]): Dictionary containing the available currency options
 
-            parameters (Dict[Any, Any]): Dictionary used to store the user's selected options based on the prompts
+            parameters (dict[any, any]): Dictionary used to store the user's selected options based on the prompts
 
         Returns:
 
@@ -143,9 +143,9 @@ def plt_heatmap(stock_parameters: dict[str, any], growth_rates: pd.DataFrame) ->
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing the user's company selection
+            stock_parameters (dict[str, any]): Dictionary containing the user's company selection
 
-            growth_rates: Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
+            growth_rates (pd.DataFrame): Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
 
         Returns:
 

@@ -127,7 +127,7 @@ def investment_input_parameters() -> dict[str, any]:
 
         Returns:
 
-            parameters (Dict[str, Any]) -- Dictionary containing investment-specific parameters based on user input
+            parameters (dict[str, any]) -- Dictionary containing investment-specific parameters based on user input
     """
 
     parameters: dict[str, any] = {}
@@ -166,11 +166,11 @@ def investment_values(investment_parameters: dict[str, any]) -> tuple[float, int
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
         Returns:
 
-            Tuple[float, int]:
+            tuple[float, int]:
 
                 return_rate (float): Average monthly return rate of the selected financial instrument
 
@@ -195,9 +195,9 @@ def investment_data_forecasting(investment_parameters: dict[str, any], investmen
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
-            investment_data_values (Tuple[float, int]): Tuple of two arrays:
+            investment_data_values (tuple[float, int]): Tuple of two arrays:
 
                 -- return_rate (float): Average monthly return rate of the selected financial instrument
 
@@ -205,7 +205,7 @@ def investment_data_forecasting(investment_parameters: dict[str, any], investmen
 
         Returns:
 
-            Tuple[np.ndarray, np.ndarray]:
+            tuple[np.ndarray, np.ndarray]:
 
                 investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period
@@ -251,7 +251,7 @@ def investment_forecasting(investment_parameters: dict[str, any]) -> tuple[np.nd
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
         Returns:
 
@@ -270,13 +270,13 @@ def investment_forecasting(investment_parameters: dict[str, any]) -> tuple[np.nd
 @utils.timer
 def summary_table(investment_parameters: dict[str, any], investment_data_forecast: tuple[np.ndarray, np.ndarray]) -> pd.DataFrame:
     """
-        The function generates a DataFrame of investment metrics — returns, costs, profit, profit margin, and return on investment — at 5-year intervals
+        The function generates a DataFrame of investment metrics — returns, costs, profit, profit margin, and return on investment at 5-year intervals
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
-            investment_data_forecast (Tuple[np.ndarray, np.ndarray]) : Tuple of two arrays
+            investment_data_forecast (tuple[np.ndarray, np.ndarray]) : Tuple of two arrays
 
                 -- investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period
@@ -333,7 +333,7 @@ def formatted_output(investment_parameters: dict[str, any], investment_metrics_d
 
         Arguments:
 
-            investment_parameters (Dict[str, Any]): Dictionary containing investment-specific parameters based on user input
+            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
             investment_metrics_df (pd.DataFrame): DataFrame of shape (number_of_years, number_of_metrics) containing forecasted investment metrics
                                                   at 5-year intervals

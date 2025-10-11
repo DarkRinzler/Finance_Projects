@@ -146,7 +146,7 @@ def input_stock_parameters() -> dict[str, any]:
 
         Returns:
 
-            parameters (Dict[str, Any]) -- Dictionary containing stock-specific parameters based on user input
+            parameters (dict[str, any]) -- Dictionary containing stock-specific parameters based on user input
     """
 
     parameters: dict[str, any] = {}
@@ -195,7 +195,7 @@ def projected_free_cash_flow(stock_parameters: dict[str, any], growth_rates: np.
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             growth_rates (np.ndarray): Array of shape (growth_rates_interval, 1, 1, 1) containing the growth rate
 
@@ -229,7 +229,7 @@ def present_value_free_cash_flow(discount_rate: np.ndarray, projected_fcf: tuple
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
-            projected_fcf (Tuple[np.ndarray, np.ndarray]): Tuple of two arrays
+            projected_fcf (tuple[np.ndarray, np.ndarray]): Tuple of two arrays
 
                 -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
 
@@ -261,7 +261,7 @@ def discounted_terminal_value(discount_rate: np.ndarray, terminal_growth_rate: n
 
             terminal_growth_rate (np.ndarray): Array of shape (1, 1, 1, ndim_tg_rate) containing the assumed terminal growth rates
 
-            projected_fcf (Tuple[np.ndarray, np.ndarray]): Tuple of two arrays
+            projected_fcf (tuple[np.ndarray, np.ndarray]): Tuple of two arrays
 
                 -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
 
@@ -293,7 +293,7 @@ def intrinsic_value_share(stock_parameters: dict[str, any], discounted_fcf: np.n
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             discounted_fcf (np.ndarray): Array of shape (growth_rates_interval, 1, ndim_ds_rate, 1) representing the present value of the FCF
                                          for each simulation over the time period
@@ -302,7 +302,7 @@ def intrinsic_value_share(stock_parameters: dict[str, any], discounted_fcf: np.n
                                         of the terminal value for each simulation over the time period
 
         Returns:
-            Tuple[np.ndarray, np.ndarray]:
+            tuple[np.ndarray, np.ndarray]:
 
                 -- total_present_value (np.ndarray): Array of shape (growth_rates_interval, n_years, ndim_ds_rate, ndim_tg_rate) representing the present value
                                                   of the total present value for each simulation over the time period, across all combinations of discount
@@ -312,6 +312,7 @@ def intrinsic_value_share(stock_parameters: dict[str, any], discounted_fcf: np.n
                                                         intrinsic value per share computed from the total PV for each simulation over the time period,
                                                         across all combinations of discount rates and terminal growth rates
     """
+
     # Calculates the total present value (PV) of the free cash flow (FCF)
     total_present_value = discounted_fcf + discounted_tv
 
@@ -331,7 +332,7 @@ def calculate_intrinsic_value(stock_parameters: dict[str, any], discount_rate: n
 
             terminal_growth_rate (np.ndarray): Array of shape (1, 1, ndim_tg_rate) containing the assumed terminal growth rates
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             growth_rate (np.ndarray): Array of shape (1, ) containing the growth rate
 
@@ -363,7 +364,7 @@ def growth_rate_optimisation(stock_parameters: dict[str, any], discount_rate: np
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
@@ -371,7 +372,7 @@ def growth_rate_optimisation(stock_parameters: dict[str, any], discount_rate: np
 
         Returns:
 
-            Tuple[np.ndarray, np.ndarray]:
+            tuple[np.ndarray, np.ndarray]:
 
                 -- best_growth_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, ndim_tg_rate) representing the growth rate that minimises the difference
                                                between the intrinsic value per share and the stock price across all combinations of discount rates and
@@ -409,7 +410,7 @@ def implied_growth_rates_pd(stock_parameters: dict[str, any], discount_rate:np.n
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
@@ -448,7 +449,7 @@ def formatted_output(stock_parameters: dict[str, any], implied_gr_rate_df: pd.Da
 
         Arguments:
 
-            stock_parameters (Dict[str, Any]): Dictionary containing stock-specific parameters based on user input
+            stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
             implied_gr_rate_df (pd.DataFrame): DataFrame of shape (ndim_ds_rate, ndim_tg_rate) with the implied growth rates for
                                                all discount–terminal growth rate combinations
