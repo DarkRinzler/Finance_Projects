@@ -58,11 +58,11 @@ def timer(func: callable) -> callable:
 
         Arguments:
 
-            func (callable) -- Function to be timed
+            func (callable): Function to be timed
 
         Returns:
 
-            callable -- A wrapped version of the input function that measures and reports its execution time when called.
+            callable: A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)

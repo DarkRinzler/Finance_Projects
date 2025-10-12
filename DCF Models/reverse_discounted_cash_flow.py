@@ -56,7 +56,7 @@ Date
 # Third-party Libraries
 import numpy as np                      # Numerical computation
 import pandas as pd                     # Data manipulation
-from tabulate import tabulate           # Visualisation (heatmap)
+from tabulate import tabulate           # Visualisation (bash)
 from colorama import Fore, init         # Bash coloring
 
 # Local modules
@@ -402,6 +402,11 @@ def growth_rate_optimisation(stock_parameters: dict[str, any], discount_rate: np
 
     return best_growth_rate, min_error
 
+# -------------------------------------------------------- #
+#                     DATAFRAME CREATION
+# -------------------------------------------------------- #
+
+
 @utils.timer
 def implied_growth_rates_pd(stock_parameters: dict[str, any], discount_rate:np.ndarray, terminal_growth_rate: np.ndarray) -> pd.DataFrame:
     """
@@ -467,7 +472,7 @@ def formatted_output(stock_parameters: dict[str, any], implied_gr_rate_df: pd.Da
     print(f"\n{f" Reverse Discounted Cash Flow - {stock_parameters['company_stock']} ":-^{width}}")
 
     # Print the DataFrame in tabular form
-    print(f'\n{tabulate(formatted_matrix_df, headers ='keys', tablefmt ='grid', stralign = 'center', showindex = True)}')
+    print(f'\n{tabulate(formatted_matrix_df, headers ='keys', tablefmt = 'grid', stralign = 'center', showindex = True)}')
 
 def main() -> None:
     """

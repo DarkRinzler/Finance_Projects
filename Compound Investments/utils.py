@@ -57,11 +57,11 @@ def timer(func: callable) -> callable:
 
         Arguments:
 
-            func (callable) -- Function to be timed
+            func (callable): Function to be timed
 
         Returns:
 
-            callable -- A wrapped version of the input function that measures and reports its execution time when called.
+            callable: A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -150,10 +150,10 @@ def plt_investment(investment_parameters: dict[str, any], investment_growth: tup
 
             investment_growth (tuple[np.ndarray, np.ndarray]): Tuple of two arrays:
 
-                -- investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
+                - investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period
 
-                -- investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
+                - investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
                                                   the selected investment period
 
             months_in_year (int): Number of months in a year
@@ -248,7 +248,7 @@ def plt_investment(investment_parameters: dict[str, any], investment_growth: tup
               fontsize = 14, fontweight = 'bold', color='black', pad = 10)
     plt.xlabel('Years', fontsize = 12, fontweight = 'bold', color = 'black', labelpad = 8)
     plt.ylabel(f'Return', fontsize = 12, fontweight = 'bold', color = 'black', labelpad = 8)
-    plt.legend(loc='upper left')
+    plt.legend(loc = 'upper left')
 
     # Disable grid
     plt.grid(False)

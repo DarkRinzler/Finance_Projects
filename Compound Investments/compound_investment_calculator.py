@@ -51,9 +51,9 @@ Date
 # -------------------------------------------------------- #
 
 # Third-party libraries
-import numpy as np
-import pandas as pd
-from tabulate import tabulate
+import numpy as np                            # Numerical computation
+import pandas as pd                           # Data manipulation
+from tabulate import tabulate                 # Visualisation (bash)
 
 # Local modules
 import utils                                  # Custom helper function
@@ -266,6 +266,10 @@ def investment_forecasting(investment_parameters: dict[str, any]) -> tuple[np.nd
     investment_forecasted_data = investment_data_forecasting(investment_parameters, investment_data_values)
 
     return investment_forecasted_data
+
+# -------------------------------------------------------- #
+#                     DATAFRAME CREATION
+# -------------------------------------------------------- #
 
 @utils.timer
 def summary_table(investment_parameters: dict[str, any], investment_data_forecast: tuple[np.ndarray, np.ndarray]) -> pd.DataFrame:
