@@ -68,7 +68,7 @@ pd.set_option('display.max_columns', None)      # Ensure all columns of the Data
 # -------------------------------------------------------- #
 
 # Number of simulations
-n_simulations: int = int(5e4)
+n_simulations: int = int(1e5)
 
 # Number of total trading days in a year
 trading_days: int = 252
@@ -78,6 +78,9 @@ dt: float = float(1 / trading_days)
 
 # Days of correlation
 days: int = 7
+
+# Performance period in years
+T: int = 1
 
 # Seed generator
 np.random.seed(seed = 12345)
@@ -119,14 +122,20 @@ def log_data(data: pd.DataFrame) -> pd.DataFrame:
         .rename(columns = {
             'Date': 'date',
             'EUR/SEK': 'eur/sek',
-            'AME1V Close': 'stock_price',
-            'EURO 1 y': 'euro_1y_rate',
+            'AME1V Close': 'stock_eur_price',
+            'EURO 1 y': 'eur_1y_rate',
             'SEK 1 y': 'sek_1y_rate',
         })
     )
 
-    # Add daily log-returns for the company stock price
-    enriched_data['log_returns'] = np.log(enriched_data['stock_price'] / enriched_data['stock_price'].shift(periods = 1, axis = 0))
+    # Add daily price in Swedish Krone (SEK)
+    enriched_data['stock_sek_price'] = enriched_data['stock_eur_price'] * enriched_data['eur/sek']
+
+    # Add daily log-returns for the company stock euro price
+    enriched_data['log_sek_returns'] = np.log(enriched_data['stock_sek_price'] / enriched_data['stock_sek_price'].shift(periods = 1, axis = 0))
+
+    # Add daily log-returns for the company stock euro price
+    enriched_data['log_eur_returns'] = np.log(enriched_data['stock_eur_price'] / enriched_data['stock_eur_price'].shift(periods = 1, axis = 0))
 
     # Add daily log-returns for the exchange rate
     enriched_data['log_eur/sek'] = np.log(enriched_data['eur/sek'] / enriched_data['eur/sek'].shift(periods = 1, axis = 0))
@@ -177,7 +186,7 @@ def nw_annualised_moments(data: np.ndarray, lag: int, axis: int, keepdims: bool)
     return np.sqrt(nw_var)
 
 
-def annualised_moments(data: pd.DataFrame, log_stock: str = 'log_returns', log_exchange: str = 'log_eur/sek') -> dict[str, tuple[float, float, float]]:
+def annualised_moments(data: pd.DataFrame, log_stock: str = 'log_sek_returns', log_exchange: str = 'log_eur/sek') -> dict[str, tuple[float, float, float]]:
     """
         The function computes the annualised first two moments (mean and standard deviation) of log-returns for the company stock price and exchange rate
 
@@ -217,7 +226,7 @@ def annualised_moments(data: pd.DataFrame, log_stock: str = 'log_returns', log_e
 
     return log_returns_stats
 
-def cholesky_factorisation(data: pd.DataFrame, stock: str = 'stock_price', exchange: str = 'eur/sek') -> tuple[bool, np.ndarray | None]:
+def cholesky_factorisation(data: pd.DataFrame, stock: str = 'stock_sek_price', exchange: str = 'eur/sek') -> tuple[bool, np.ndarray | None]:
     """
         The function checks if the correlation matrix between the stock price and exchange rate allows for Cholesky factorisation
 
@@ -260,7 +269,7 @@ def cholesky_factorisation(data: pd.DataFrame, stock: str = 'stock_price', excha
 # -------------------------------------------------------- #
 
 def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[float, float, float]],
-                         cholesky_flag: bool, nw_flag: bool, stock: str = 'stock_price', log_stock: str = 'log_returns',
+                         cholesky_flag: bool, nw_flag: bool, stock: str = 'stock_sek_price', log_stock: str = 'log_sek_returns',
                          exchange: str = 'eur/sek', log_exchange: str = 'log_eur/sek') -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
         The function computes the stochastic evolution of the stock price, stock log-returns, and exchange rate
@@ -270,7 +279,7 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
             data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
 
             log_stats_moments (dict[str, tuple[float, float]]): Dictionary of tuples of the first two moments (annualised mean and annualised standard deviation)
-                                                                for the log-returns of the stock price and exchange rate
+                                                                for the log-returns of the sek stock price and exchange rate
 
             cholesky_flag (bool): Boolean flag that allows for cholesky factorisation
 
@@ -307,9 +316,9 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
         sigma_exchange = var_exchange
 
 
-    # Fetch the latest values for the stoch price and exchange rate for starting the stochastic evolution
-    initial_stock_price = data[stock].iloc[-1]
-    initial_exchange_rate= data[exchange].iloc[-1]
+    # Retrieve the grant date values for the sek stoch price and exchange rate for starting the stochastic evolution
+    grant_date_stock_price = data[stock].iloc[-1]
+    grant_date_exchange_rate= data[exchange].iloc[-1]
 
     # Generate two gaussian distributed numbers to evolve both the stock price and the exchange rate
     normal_samples = np.random.normal(loc = 0, scale = 1, size = (n_simulations, trading_days, 2))
@@ -326,8 +335,8 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
     exchange_rate_factors = np.exp((mu_exchange - (sigma_exchange ** 2) / 2) * dt + sigma_exchange * np.sqrt(dt) * samples[:, :, 1])
 
     # Cumulative product to get stock price and exchange rate stochastic evolution
-    stock_paths = initial_stock_price * np.cumprod(stock_factors, axis = 1)
-    exchange_rate_paths = initial_exchange_rate * np.cumprod(exchange_rate_factors, axis = 1)
+    stock_paths = grant_date_stock_price * np.cumprod(stock_factors, axis = 1)
+    exchange_rate_paths = grant_date_exchange_rate * np.cumprod(exchange_rate_factors, axis = 1)
 
     # Daily log-returns for stochastic evolved stock price
     log_returns_paths = (mu_stock - ((sigma_stock ** 2) / 2)) * dt + sigma_stock * np.sqrt(dt) * normal_samples[:, :, 0]
@@ -338,8 +347,8 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
 #              PERFORMANCE SHARE PLAN STRUCTURE
 # -------------------------------------------------------- #
 
-def tranche_contribution(data: pd.DataFrame, stock_prices_paths: np.ndarray, stock_log_returns_paths: np.ndarray,
-                         nw_flag: bool, stock: str = 'stock_price') -> tuple[np.ndarray, np.ndarray]:
+def tranche_contribution(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray, stock_sek_log_returns_paths: np.ndarray,
+                         nw_flag: bool, stock: str = 'stock_sek_price') -> tuple[np.ndarray, np.ndarray]:
     """
         The function computes the tranche contribution arrays representing the percentage achievement of performance targets for each simulation
 
@@ -347,9 +356,9 @@ def tranche_contribution(data: pd.DataFrame, stock_prices_paths: np.ndarray, sto
 
             data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
 
-            stock_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
+            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
 
-            stock_log_returns_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock log-returns
+            stock_sek_log_returns_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock log-returns
 
             nw_flag (bool): Boolean flag that allows for Newey_West standard deviation
 
@@ -373,17 +382,17 @@ def tranche_contribution(data: pd.DataFrame, stock_prices_paths: np.ndarray, sto
 
     # Calculate the annualised volatility for each of the simulations
     if nw_flag:
-        annualised_std = nw_annualised_moments(data = stock_log_returns_paths, lag = days, axis = 1, keepdims = True) * np.sqrt(trading_days)
+        annualised_std = nw_annualised_moments(data = stock_sek_log_returns_paths, lag = days, axis = 1, keepdims = True) * np.sqrt(trading_days)
     else:
-        annualised_std = np.std(stock_log_returns_paths, axis = 1, ddof = 1, keepdims = True) * np.sqrt(trading_days)
+        annualised_std = np.std(stock_sek_log_returns_paths, axis = 1, ddof = 1, keepdims = True) * np.sqrt(trading_days)
 
     # Calculate the yearly log-return from last observed to simulated final value
-    yearly_log_return = (stock_prices_paths[:, -1].reshape(-1, 1) - initial_stock_price) / initial_stock_price
+    yearly_return = stock_sek_prices_paths[:, -1].reshape(-1, 1) / initial_stock_price - 1
 
     # Calculate the percentage target achievement for first tranche (return-based (0, 0.05, 0.1)) for each simulation
     tranche1 = np.where(
-        yearly_log_return <= return_targets[0], 0, np.where(
-            yearly_log_return >= return_targets[2], 1, (yearly_log_return - return_targets[0]) / (return_targets[2] - return_targets[0]))
+        yearly_return <= return_targets[0], 0, np.where(
+            yearly_return >= return_targets[2], 1, (yearly_return - return_targets[0]) / (return_targets[2] - return_targets[0]))
     )
 
     # Calculate the percentage target achievement for second tranche (volatility-based (0.5, 0.4, 0.3)) for each simulation
@@ -395,27 +404,32 @@ def tranche_contribution(data: pd.DataFrame, stock_prices_paths: np.ndarray, sto
     return tranche1, tranche2
 
 
-def trigger(stock_prices_paths: np.ndarray) -> np.ndarray:
+def trigger(stock_sek_prices_paths: np.ndarray, exchange_rate_paths: np.ndarray) -> np.ndarray:
     """
         The function computes the boolean trigger value for each simulation
 
         Arguments:
 
-            stock_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
+            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated sek stock prices
+
+            exchange_rate_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated exchange rates
 
         Returns:
 
              triggers (np.ndarray): Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
     """
 
+    # Calculate the corresponding stock prices in EUR from the simulated one in SEK
+    stock_eur_prices_paths = stock_sek_prices_paths / exchange_rate_paths
+
     # Calculate the trigger condition for each simulation
-    triggers = np.any(stock_prices_paths >= 10, axis = 1, keepdims = True)
+    triggers = np.any(stock_eur_prices_paths >= 10, axis = 1, keepdims = True)
 
     return triggers
 
 
-def fair_value(data: pd.DataFrame, stock_prices_paths: np.ndarray, tranches: tuple[np.ndarray, np.ndarray],
-               triggers: np.ndarray, stock: str = 'stock_price', yearly_rate: str = 'euro_1y_rate') -> dict[str, any]:
+def fair_value(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray, tranches: tuple[np.ndarray, np.ndarray],
+               triggers: np.ndarray, stock: str = 'stock_sek_price', exchange: str = 'eur/sek', yearly_rate: str = 'sek_1y_rate') -> dict[str, any]:
     """
         The function computes the expected fair value of the performance share plan (PSP) by combining simulation-based payout factors, trigger conditions,
         and discounting with the latest one year euro interest rate
@@ -424,7 +438,7 @@ def fair_value(data: pd.DataFrame, stock_prices_paths: np.ndarray, tranches: tup
 
             data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
 
-            stock_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
+            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
 
             tranches (tuple[np.ndarray, np.ndarray]):
 
@@ -434,15 +448,18 @@ def fair_value(data: pd.DataFrame, stock_prices_paths: np.ndarray, tranches: tup
 
             triggers (np.ndarray): Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
 
-            yearly_rate (str): Column name for the yearly euro interest rate, default is 'euro_1y_rate'
+            stock (str): Column name for the sek stock price, default is 'stock_sek_price'
 
-            stock (str): Column name for the stock price, default is 'stock_price'
+            exchange (str): Column name for the exchange rate, default is 'eur/sek'
+
+            yearly_rate (str): Column name for the yearly sek interest rate, default is 'sek_1y_rate'
 
         Returns:
 
             dict[str, Any]: Dictionary containing the discounted expected fair values and payout factors:
 
                 - **fair_value** (dict[str, float]): Dictionary containing the expected fair value per unit share under the non-path-dependent and path-dependent assumption
+
                 - **payout_factors** (np.ndarray): Array of shape (n_simulations, 1) containing the payout factors computed across all simulations
     """
 
@@ -450,28 +467,35 @@ def fair_value(data: pd.DataFrame, stock_prices_paths: np.ndarray, tranches: tup
     tranche1, tranche2 = tranches
 
     # Retrieve latest one year euro interest rate
-    grant_date_interest_rate = float(data[yearly_rate].iloc[-1] / 100)
+    grant_sek_interest_rate = float(data[yearly_rate].iloc[-1] / 100)
 
-    # Retrieve the latest stock price from historical data
-    initial_stock_price = np.array([[data[stock].iloc[-1]]], dtype=float)
+    # Retrieve the grant date stock price from historical data
+    grant_sek_stock_price = np.array([[data[stock].iloc[-1]]], dtype = float)
+
+    # Retrieve the grant date exchange rae from historical data
+    grant_exchange = np.array([[data[exchange].iloc[-1]]], dtype = float)
 
     # Calculate payout factors for each simulation
     payout_factors = (tranche1 * targets['total_shareholder_return']['weight'] + tranche2 * targets['annualised_volatility']['weight']) * triggers
 
     # Calculate the average payout factor across all simulation for no path dependent case
-    non_path_mean_payout = initial_stock_price * np.mean(payout_factors, axis = 0, keepdims = True)
+    non_path_mean_payout = grant_sek_stock_price * np.mean(payout_factors, axis = 0, keepdims = True)
 
     # Calculate the average payout factor across all simulations for path dependent case
-    path_mean_payout = np.mean(payout_factors * stock_prices_paths[:, -1].reshape(-1, 1), axis = 0, keepdims = True)
+    path_mean_payout = np.mean(payout_factors * stock_sek_prices_paths[:, -1].reshape(-1, 1), axis = 0, keepdims = True)
 
     # Discount factor
-    discount_factor = np.exp(- grant_date_interest_rate)
+    discount_factor = np.exp(- (grant_sek_interest_rate * T))
 
-    # Dictionary containing the discounted expected unit share fair value and payout factors
+    # Convert the unit share fair value to euro at grant date
+    non_path_grant_fair_value = float(np.squeeze((non_path_mean_payout * discount_factor) / grant_exchange))
+    path_grant_fair_value = float(np.squeeze((path_mean_payout * discount_factor) / grant_exchange))
+
+    # Dictionary containing the discounted expected unit share fair value in euro and payout factors
     unit_fair_value = {
         'fair_value': {
-            'non_path_dependent': float(np.squeeze(non_path_mean_payout * discount_factor)),
-            'path_dependent': float(np.squeeze(path_mean_payout * discount_factor))
+            'non_path_dependent': non_path_grant_fair_value,
+            'path_dependent': path_grant_fair_value
         },
         'payout_factors': payout_factors
     }
@@ -504,30 +528,51 @@ def fair_price_pd(data: pd.DataFrame, cholesky_flag: bool, nw_flag: bool) -> dic
     statistic_values = annualised_moments(data = data)
 
     # Run stochastic evolution
-    ft_stock_prices, ft_log_returns, ft_exchange_rate = stochastic_evolution(data = data, log_stats_moments = statistic_values, cholesky_flag = cholesky_flag, nw_flag = nw_flag)
-
-    # Plot percentile of simulated final stock prices when both flag are True
-    if cholesky_flag and nw_flag:
-        percentiles = np.percentile(ft_stock_prices[:, -1], [5, 50, 95])
-        utils.percentile_plot(data = ft_stock_prices[:, -1], percentiles = percentiles)
+    ft_stock_sek_prices, ft_sek_log_returns, ft_exchange_rate = stochastic_evolution(data = data, log_stats_moments = statistic_values, cholesky_flag = cholesky_flag, nw_flag = nw_flag)
 
     # Compute trigger
-    boolean_trigger = trigger(stock_prices_paths = ft_stock_prices)
+    boolean_trigger = trigger(stock_sek_prices_paths = ft_stock_sek_prices, exchange_rate_paths = ft_exchange_rate)
 
     # Compute both tranches contributions
-    tranches = tranche_contribution(data = data, stock_prices_paths = ft_stock_prices, stock_log_returns_paths = ft_log_returns, nw_flag = nw_flag)
+    tranches = tranche_contribution(data = data, stock_sek_prices_paths = ft_stock_sek_prices, stock_sek_log_returns_paths = ft_sek_log_returns, nw_flag = nw_flag)
+
+    print(np.sum((tranches[0] > 0) & (tranches[0] < 1)))
 
     # Compute fair value dictionary
-    share_value_dict = fair_value(data = data, stock_prices_paths = ft_stock_prices, tranches = tranches, triggers = boolean_trigger)
+    share_value_dict = fair_value(data = data, stock_sek_prices_paths = ft_stock_sek_prices, tranches = tranches, triggers = boolean_trigger)
 
     # Extract results
     unit_fair_value = share_value_dict['fair_value']
     payout_factors = share_value_dict['payout_factors']
 
+    # Plot percentile of simulated final stock prices when both flag are True
+    if cholesky_flag and nw_flag:
+
+        # Dictionary containing simulated quantities
+        stochastic_dict = {
+            'stock price (SEK)': ft_stock_sek_prices,
+            'stock price (EUR)': ft_stock_sek_prices / ft_exchange_rate,
+            'tranche 1': tranches[0],
+            'tranche 2': tranches[1],
+            'trigger': boolean_trigger,
+            'payouts': payout_factors
+        }
+
+        for key, quantity in stochastic_dict.items():
+            if quantity.shape[1] == trading_days:
+                percentiles = np.percentile(quantity[:, -1], [5, 50, 95])
+                utils.percentile_plot(data = quantity[:, -1], percentiles = percentiles, plot_name = key)
+            elif key in ['tranche 2', 'payouts']:
+                utils.histogram_plot(data = quantity.reshape(-1), plot_name = key)
+            #elif key == 'tranche 1':
+                #utils.bar_plot(data = quantity.reshape(-1), plot_name = key)
+            else:
+                utils.pie_plot(data = np.ravel(quantity), plot_name = key)
+
     # Append results to list for DataFrame
     result = {
-        'fair_value_non_path': f'{unit_fair_value['non_path_dependent']:.2f}',
-        'fair_value_path': f'{unit_fair_value['path_dependent']:.2f}',
+        'fv_eur_non_path': f'{unit_fair_value['non_path_dependent']:.2f}',
+        'fv_eur_path': f'{unit_fair_value['path_dependent']:.2f}',
         'mean_tot_payout': f'{np.mean(payout_factors) * 100:.2f}%',
         'prob_tr1_max': f'{np.mean(tranches[0] == 1) * 100:.2f}%',
         'prob_tr2_max': f'{np.mean(tranches[1] == 1) * 100:.2f}%',
@@ -550,6 +595,8 @@ def main() -> None:
 
     # Sorted DataFrame with columns for log-returns and log-exchange rate values
     extended_data = log_data(data = aurora_metals)
+
+    print(extended_data)
 
     # List containing the results for each combination of the flags
     combinations = []

@@ -40,8 +40,6 @@ from functools import wraps                         # Wrapper
 # Third-party libraries
 import numpy as np                                  # Numerical computation
 import matplotlib.pyplot as plt                     # Visualisation
-from matplotlib.ticker import MultipleLocator       # Ticker locator
-
 
 # -------------------------------------------------------- #
 #                       WRAPPERS
@@ -74,19 +72,21 @@ def timer(func: callable) -> callable:
 #                       PLOTTING
 # -------------------------------------------------------- #
 
-def percentile_plot(data: np.ndarray, percentiles: np.ndarray) -> None:
+def percentile_plot(data: np.ndarray, percentiles: np.ndarray, plot_name: str) -> None:
     """
-            Decorator that measures the execution time of a function.
+        Decorator that measures the execution time of a function.
 
-            Arguments:
+        Arguments:
 
-                data (np.ndarray): Function to be timed
+            data (np.ndarray): Function to be timed
 
-                percentiles (np.ndarray):
+            percentiles (np.ndarray):
 
-            Returns:
+            plot_name (str):
 
-                None
+        Returns:
+
+            None
     """
 
     # Unpack to get percentiles
@@ -95,7 +95,7 @@ def percentile_plot(data: np.ndarray, percentiles: np.ndarray) -> None:
     # Define the size of the plot figure
     plt.figure(figsize = (12, 6))
 
-    # Histogram of the data value
+    # Histogram of the data values
     plt.hist(data, bins = 400, histtype = 'bar', color = 'lightsteelblue')
 
     # Add vertical line for each percentile spanning the whole figure
@@ -104,8 +104,8 @@ def percentile_plot(data: np.ndarray, percentiles: np.ndarray) -> None:
     plt.axvline(per95, color = 'forestgreen', linestyle = '--', linewidth = 1, label = '95th percentile')
 
     # Apply plot label and title
-    plt.title('Final Stock Price Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
-    plt.xlabel('Stock Price', fontsize = 10, fontweight = 'bold', color = 'black')
+    plt.title(f'Final {plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
+    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight = 'bold', color = 'black')
     plt.ylabel('Frequency', fontsize = 10, fontweight = 'bold', color = 'black')
     plt.legend(loc = 'upper right')
 
@@ -113,7 +113,6 @@ def percentile_plot(data: np.ndarray, percentiles: np.ndarray) -> None:
     plt.grid(False)
 
     ax = plt.gca()
-    ax.xaxis.set_major_locator(MultipleLocator(5))
 
     # Move x-axis to y = 0
     ax.spines['bottom'].set_position(('data', 0))
@@ -128,5 +127,97 @@ def percentile_plot(data: np.ndarray, percentiles: np.ndarray) -> None:
     plt.tight_layout()
 
     # Save plot as an image (JPG format)
-    plt.savefig('investment_forecast.jpg', dpi = 500)
+    plt.savefig(f'Distribution {plot_name.title()}.jpg', dpi = 500)
+    plt.close()
+
+def histogram_plot(data: np.ndarray, plot_name: str) -> None:
+    """
+        Decorator that measures the execution time of a function.
+
+        Arguments:
+
+            data (np.ndarray): Function to be timed
+
+            plot_name (str):
+
+        Returns:
+
+            None
+    """
+
+    # Define the size of the plot figure
+    plt.figure(figsize = (12, 6))
+
+    # Histogram of the data values
+    plt.hist(data, bins = 400, histtype = 'bar', color = 'lightsteelblue')
+
+    # Apply plot label and title
+    plt.title(f'{plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
+    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight = 'bold', color = 'black')
+    plt.ylabel('Frequency', fontsize = 10, fontweight = 'bold', color = 'black')
+
+    # Disable grid
+    plt.grid(False)
+
+    # Use tight_layout to adjust the spacing and center the plot
+    plt.tight_layout()
+
+    # Save plot as an image (JPG format)
+    plt.savefig(f'Histogram {plot_name.title()}.jpg', dpi = 500)
+    plt.close()
+
+def bar_plot(data: np.ndarray, plot_name: str) -> None:
+    """
+        Decorator that measures the execution time of a function.
+
+        Arguments:
+
+            data (np.ndarray): Function to be timed
+
+            plot_name (str):
+
+        Returns:
+
+            None
+    """
+
+    # Define the size of the plot figure
+    plt.figure(figsize=(12, 6))
+
+    # Find unique elements and their counts
+    values, counts = np.unique(data, return_counts = True)
+
+    # Calculate the percentage of each respective unique element
+    proportions = counts / np.sum(counts)
+
+    # Bar plot the data values
+    plt.bar(values, proportions, width = 0.2, color = 'lightsteelblue', edgecolor = 'black')
+
+    # Apply plot label and title
+    plt.title(f'{plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
+    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight='bold', color = 'black')
+    plt.ylabel('Probability', fontsize = 10, fontweight = 'bold', color='black')
+
+    # Use tight_layout to adjust the spacing and center the plot
+    plt.tight_layout()
+
+    # Save plot as an image (JPG format)
+    plt.savefig(f'Percentages {plot_name.title()}.jpg', dpi = 500)
+    plt.close()
+
+def pie_plot(data: np.ndarray, plot_name: str) -> None:
+
+    labels = ['No payout', 'Partial payout', 'Full payout']
+    counts = [
+        np.sum(data == 0),
+        np.sum((data > 0) & (data < 1)),
+        np.sum(data == 1)
+    ]
+    plt.pie(counts, labels=labels, autopct='%1.1f%%', colors=['#ff9999', '#66b3ff', '#99ff99'])
+
+    # Use tight_layout to adjust the spacing and center the plot
+    plt.tight_layout()
+
+    # Save plot as an image (JPG format)
+    plt.savefig(f'Pie {plot_name.title()}.jpg', dpi=500)
     plt.close()
