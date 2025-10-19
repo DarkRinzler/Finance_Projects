@@ -56,7 +56,7 @@ def timer(func: callable) -> callable:
     """
         Decorator that measures the execution time of a function.
 
-        Arguments:
+        Parameters:
 
             func (callable): Function to be timed
 
@@ -83,7 +83,7 @@ def input_choice(key_prompt: str, stock_parameters: dict[any, any], parameters: 
     """
         The function prints the available currency options in color and validates the user's selection
 
-        Arguments:
+        Parameters:
 
             key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
@@ -115,7 +115,7 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
         The function checks if the numerical inputs of the user are consistent with the assumptions of the reverse
         discounted cash flow model of the script reverse_discounted_cash_flow.py
 
-        Arguments:
+        Parameters:
 
             key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
 
@@ -141,7 +141,7 @@ def plt_heatmap(stock_parameters: dict[str, any], growth_rates: pd.DataFrame) ->
     """
         The function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing the user's company selection
 

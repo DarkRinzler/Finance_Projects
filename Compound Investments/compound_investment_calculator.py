@@ -121,7 +121,7 @@ def investment_input_parameters() -> dict[str, any]:
         The function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
         functions to validate input and print on bash prompt selection
 
-        Arguments:
+        Parameters:
 
             No arguments
 
@@ -164,7 +164,7 @@ def investment_values(investment_parameters: dict[str, any]) -> tuple[float, int
         Calculates the average monthly return rate of the user's selected financial instrument, based on its average annual return rate,
         and the total number of months in the chosen investment period for forecasting
 
-        Arguments:
+        Parameters:
 
             investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
@@ -172,9 +172,9 @@ def investment_values(investment_parameters: dict[str, any]) -> tuple[float, int
 
             tuple[float, int]:
 
-                return_rate (float): Average monthly return rate of the selected financial instrument
+                - return_rate (float): Average monthly return rate of the selected financial instrument
 
-                total_months (int): Total number of months in the user-selected investment period
+                - total_months (int): Total number of months in the user-selected investment period
     """
 
     # Average annual return rate of the user's financial instrument in decimals
@@ -193,24 +193,24 @@ def investment_data_forecasting(investment_parameters: dict[str, any], investmen
     """
         The function calculates the forecasted investment returns and costs within the selected investment period
 
-        Arguments:
+        Parameters:
 
             investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
             investment_data_values (tuple[float, int]): Tuple of two arrays:
 
-                -- return_rate (float): Average monthly return rate of the selected financial instrument
+                - return_rate (float): Average monthly return rate of the selected financial instrument
 
-                -- total_months (int): Total number of months in the user-selected investment period
+                - total_months (int): Total number of months in the user-selected investment period
 
         Returns:
 
             tuple[np.ndarray, np.ndarray]:
 
-                investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
+                - investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period
 
-                investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
+                - investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
                                                   the selected investment period
     """
 
@@ -249,7 +249,7 @@ def investment_forecasting(investment_parameters: dict[str, any]) -> tuple[np.nd
         The function calculates the forecasted investment returns and costs within the selected investment period by executing previously
         defined functions in succession
 
-        Arguments:
+        Parameters:
 
             investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
@@ -276,16 +276,16 @@ def summary_table(investment_parameters: dict[str, any], investment_data_forecas
     """
         The function generates a DataFrame of investment metrics — returns, costs, profit, profit margin, and return on investment at 5-year intervals
 
-        Arguments:
+        Parameters:
 
             investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 
             investment_data_forecast (tuple[np.ndarray, np.ndarray]) : Tuple of two arrays
 
-                -- investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
+                - investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
                                                     the selected investment period
 
-                -- investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
+                - investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
                                                   the selected investment period
 
         Returns:
@@ -335,7 +335,7 @@ def formatted_output(investment_parameters: dict[str, any], investment_metrics_d
     """
         The function formats and displays the DataFrame with improved output readability
 
-        Arguments:
+        Parameters:
 
             investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
 

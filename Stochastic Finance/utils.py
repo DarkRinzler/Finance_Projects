@@ -5,8 +5,10 @@ Collections of custom functions for the script performance_share_plan.py
 
 Dependencies
 -----------------------------------------------------------------------
+-numpy
 - pandas
 - seaborn
+- matplotlib
 
 Usage
 -----------------------------------------------------------------------
@@ -39,7 +41,9 @@ from functools import wraps                         # Wrapper
 
 # Third-party libraries
 import numpy as np                                  # Numerical computation
+import pandas as pd                                 # Data manipulation
 import matplotlib.pyplot as plt                     # Visualisation
+import seaborn as sns                               # Visualisation
 
 # -------------------------------------------------------- #
 #                       WRAPPERS
@@ -47,9 +51,9 @@ import matplotlib.pyplot as plt                     # Visualisation
 
 def timer(func: callable) -> callable:
     """
-        Decorator that measures the execution time of a function.
+        Decorator that measures the execution time of a function
 
-        Arguments:
+        Parameters:
 
             func (callable): Function to be timed
 
@@ -69,155 +73,107 @@ def timer(func: callable) -> callable:
     return wrapper
 
 # -------------------------------------------------------- #
+#                      BASH FORMATTING
+# -------------------------------------------------------- #
+
+def percent(data: np.ndarray | bool) -> str:
+    """
+        The function returns the mean of the data as a percentage string with 2 decimals
+
+        Parameters:
+
+            data (np.ndarray | bool): Array of data values to format
+
+        Returns:
+
+            str: Formatted data as "data%"
+    """
+
+    return f"{np.mean(data) * 100:.3f}%"
+
+def mean_ci(mean: float, ste: float, z: float = 1.96) -> str:
+    """
+        The function returns the mean of the data with a confidence interval of 95%
+
+        Parameters:
+
+            mean (np.ndarray): Mean value of the data
+
+            ste (np.ndarray): Standard error of the data
+
+            z (float): Critical value for the confidence interval, default 1.96 for 95% CI
+
+        Returns:
+
+            str: Formatted string as "mean ± z*std"
+    """
+
+    return f"{mean:.3f} ± {z * ste:.3f}"
+
+# -------------------------------------------------------- #
 #                       PLOTTING
 # -------------------------------------------------------- #
 
-def percentile_plot(data: np.ndarray, percentiles: np.ndarray, plot_name: str) -> None:
+def kde_stock_plot(data: dict[str, np.ndarray], plot_name: str, x_axis: bool) -> None:
     """
-        Decorator that measures the execution time of a function.
+        The function generates a plot showing the probability density distribution for all data with key percentiles and the mean
 
-        Arguments:
+        Parameters:
 
-            data (np.ndarray): Function to be timed
+            data (np.ndarray): Array of stock data values to visualize
 
-            percentiles (np.ndarray):
+            plot_name (str): Name of the plot file to save
 
-            plot_name (str):
+            x_axis (bool):
 
         Returns:
 
             None
     """
 
-    # Unpack to get percentiles
-    per5, per50, per95 = percentiles
+    data_dataframe = pd.DataFrame({day: arr.ravel() for day, arr in data.items()})
+
+    lag_dataframe = data_dataframe.melt(value_vars = data_dataframe.columns, var_name = 'lag', value_name = 'values')
+
+    sampled_data = (
+        lag_dataframe
+        .groupby(by = 'lag')
+        .sample(n = int(1e4), random_state = 42)
+    )
 
     # Define the size of the plot figure
     plt.figure(figsize = (12, 6))
 
-    # Histogram of the data values
-    plt.hist(data, bins = 400, histtype = 'bar', color = 'lightsteelblue')
+    # Define palette of color based on the number of lag days in the DataFrame
+    palette = sns.color_palette("viridis", n_colors = sampled_data['lag'].nunique())
 
-    # Add vertical line for each percentile spanning the whole figure
-    plt.axvline(per5, color = 'orangered', linestyle = '--', linewidth = 1, label = '5th percentile')
-    plt.axvline(per50, color = 'khaki', linestyle = '--', linewidth = 1, label = '50th percentile')
-    plt.axvline(per95, color = 'forestgreen', linestyle = '--', linewidth = 1, label = '95th percentile')
+    # KDE probability density distribution of the data values
+    sns.kdeplot(data = sampled_data, x = 'values', hue = 'lag', fill = True, linewidth = 0, palette = palette, alpha = 0.3, common_norm = False)
 
     # Apply plot label and title
-    plt.title(f'Final {plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
-    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight = 'bold', color = 'black')
-    plt.ylabel('Frequency', fontsize = 10, fontweight = 'bold', color = 'black')
-    plt.legend(loc = 'upper right')
+    plt.title(f"{plot_name.title()} KDE Distribution", fontsize = 11, fontweight = 'bold', color = 'black')
+    plt.xlabel(f"{plot_name.title()}", fontsize = 10, fontweight = 'bold', color = 'black')
+    plt.ylabel('Density', fontsize = 10, fontweight = 'bold', color = 'black')
 
     # Disable grid
     plt.grid(False)
 
-    ax = plt.gca()
+    if x_axis:
+        # Get the current Axes instance to customize the plot
+        ax = plt.gca()
 
-    # Move x-axis to y = 0
-    ax.spines['bottom'].set_position(('data', 0))
+        # Move x-axis to y = 0
+        ax.spines['bottom'].set_position(('data', 0))
 
-    # Move y-axis to x = 0
-    ax.spines['left'].set_position(('data', 0))
+        # Move y-axis to x = 0
+        ax.spines['left'].set_position(('data', 0))
 
-    # Avoid negative padding
-    plt.xlim(left = 0)
-
-    # Use tight_layout to adjust the spacing and center the plot
-    plt.tight_layout()
-
-    # Save plot as an image (JPG format)
-    plt.savefig(f'Distribution {plot_name.title()}.jpg', dpi = 500)
-    plt.close()
-
-def histogram_plot(data: np.ndarray, plot_name: str) -> None:
-    """
-        Decorator that measures the execution time of a function.
-
-        Arguments:
-
-            data (np.ndarray): Function to be timed
-
-            plot_name (str):
-
-        Returns:
-
-            None
-    """
-
-    # Define the size of the plot figure
-    plt.figure(figsize = (12, 6))
-
-    # Histogram of the data values
-    plt.hist(data, bins = 400, histtype = 'bar', color = 'lightsteelblue')
-
-    # Apply plot label and title
-    plt.title(f'{plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
-    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight = 'bold', color = 'black')
-    plt.ylabel('Frequency', fontsize = 10, fontweight = 'bold', color = 'black')
-
-    # Disable grid
-    plt.grid(False)
+        # Avoid negative padding
+        plt.xlim(left = 0)
 
     # Use tight_layout to adjust the spacing and center the plot
     plt.tight_layout()
 
     # Save plot as an image (JPG format)
-    plt.savefig(f'Histogram {plot_name.title()}.jpg', dpi = 500)
-    plt.close()
-
-def bar_plot(data: np.ndarray, plot_name: str) -> None:
-    """
-        Decorator that measures the execution time of a function.
-
-        Arguments:
-
-            data (np.ndarray): Function to be timed
-
-            plot_name (str):
-
-        Returns:
-
-            None
-    """
-
-    # Define the size of the plot figure
-    plt.figure(figsize=(12, 6))
-
-    # Find unique elements and their counts
-    values, counts = np.unique(data, return_counts = True)
-
-    # Calculate the percentage of each respective unique element
-    proportions = counts / np.sum(counts)
-
-    # Bar plot the data values
-    plt.bar(values, proportions, width = 0.2, color = 'lightsteelblue', edgecolor = 'black')
-
-    # Apply plot label and title
-    plt.title(f'{plot_name.title()} Distribution', fontsize = 11, fontweight = 'bold', color = 'black')
-    plt.xlabel(f'{plot_name.title()}', fontsize = 10, fontweight='bold', color = 'black')
-    plt.ylabel('Probability', fontsize = 10, fontweight = 'bold', color='black')
-
-    # Use tight_layout to adjust the spacing and center the plot
-    plt.tight_layout()
-
-    # Save plot as an image (JPG format)
-    plt.savefig(f'Percentages {plot_name.title()}.jpg', dpi = 500)
-    plt.close()
-
-def pie_plot(data: np.ndarray, plot_name: str) -> None:
-
-    labels = ['No payout', 'Partial payout', 'Full payout']
-    counts = [
-        np.sum(data == 0),
-        np.sum((data > 0) & (data < 1)),
-        np.sum(data == 1)
-    ]
-    plt.pie(counts, labels=labels, autopct='%1.1f%%', colors=['#ff9999', '#66b3ff', '#99ff99'])
-
-    # Use tight_layout to adjust the spacing and center the plot
-    plt.tight_layout()
-
-    # Save plot as an image (JPG format)
-    plt.savefig(f'Pie {plot_name.title()}.jpg', dpi=500)
+    plt.savefig(f"kde_distribution_{plot_name}.jpg", dpi = 500)
     plt.close()

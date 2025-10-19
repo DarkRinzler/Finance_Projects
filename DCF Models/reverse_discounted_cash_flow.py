@@ -140,9 +140,9 @@ def input_stock_parameters() -> dict[str, any]:
         The function creates a dictionary with all the data selected from the user through the asked prompts, using custom helper
         functions to validate input and print on bash prompt selection
 
-        Arguments:
+        Parameters:
 
-            No arguments
+            No parameters
 
         Returns:
 
@@ -193,7 +193,7 @@ def projected_free_cash_flow(stock_parameters: dict[str, any], growth_rates: np.
     """
         The function calculates the projected free cash flow (FCF) matrix for a given time period and set of growth rates
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
@@ -201,11 +201,11 @@ def projected_free_cash_flow(stock_parameters: dict[str, any], growth_rates: np.
 
         Returns:
 
-            Tuple[np.ndarray, np.ndarray]:
+            tuple[np.ndarray, np.ndarray]:
 
-                -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
+                - time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
 
-                -- free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
+                - free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
                                                 each simulated growth rate over the time period
     """
 
@@ -225,15 +225,15 @@ def present_value_free_cash_flow(discount_rate: np.ndarray, projected_fcf: tuple
     """
         The function calculates present value (PV) of the free cash flow (FCF) matrix for a given time period and set of growth rates
 
-        Arguments:
+        Parameters:
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
             projected_fcf (tuple[np.ndarray, np.ndarray]): Tuple of two arrays
 
-                -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
+                - time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
 
-                -- free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
+                - free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
                                                 each simulated growth rate over the time period
 
         Returns:
@@ -255,7 +255,7 @@ def discounted_terminal_value(discount_rate: np.ndarray, terminal_growth_rate: n
     """
         The function calculates the discounted terminal value (TV) of the free cash flow (FCF) matrix for a given time period and set of growth rates
 
-        Arguments:
+        Parameters:
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
@@ -263,9 +263,9 @@ def discounted_terminal_value(discount_rate: np.ndarray, terminal_growth_rate: n
 
             projected_fcf (tuple[np.ndarray, np.ndarray]): Tuple of two arrays
 
-                -- time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
+                - time_period (np.ndarray): Array of shape (1, n_years, 1, 1) representing the time steps
 
-                -- free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
+                - free_cash_flow (np.ndarray): Array of shape (growth_rates_interval, n_years, 1, 1) containing the projected FCF for
                                                 each simulated growth rate over the time period
 
         Returns:
@@ -291,7 +291,7 @@ def intrinsic_value_share(stock_parameters: dict[str, any], discounted_fcf: np.n
         The function calculates the total present value (PV) of the terminal value (TV) of the free cash flow (FCF) matrix
         and the intrinsic value per share for a given time period and set of growth rates
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
@@ -302,13 +302,14 @@ def intrinsic_value_share(stock_parameters: dict[str, any], discounted_fcf: np.n
                                         of the terminal value for each simulation over the time period
 
         Returns:
+
             tuple[np.ndarray, np.ndarray]:
 
-                -- total_present_value (np.ndarray): Array of shape (growth_rates_interval, n_years, ndim_ds_rate, ndim_tg_rate) representing the present value
+                - total_present_value (np.ndarray): Array of shape (growth_rates_interval, n_years, ndim_ds_rate, ndim_tg_rate) representing the present value
                                                   of the total present value for each simulation over the time period, across all combinations of discount
                                                   rates and terminal growth rates
 
-                -- intrinsic_value_per_share (np.ndarray): Array of shape (growth_rates_interval, n_years, ndim_ds_rate, ndim_tg_rate) representing the
+                - intrinsic_value_per_share (np.ndarray): Array of shape (growth_rates_interval, n_years, ndim_ds_rate, ndim_tg_rate) representing the
                                                         intrinsic value per share computed from the total PV for each simulation over the time period,
                                                         across all combinations of discount rates and terminal growth rates
     """
@@ -326,7 +327,7 @@ def calculate_intrinsic_value(stock_parameters: dict[str, any], discount_rate: n
     """
         The function calculates the intrinsic value per share by executing previously defined functions in succession
 
-        Arguments:
+        Parameters:
 
             discount_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, 1) containing the assumed discount rates
 
@@ -362,7 +363,7 @@ def growth_rate_optimisation(stock_parameters: dict[str, any], discount_rate: np
         The function calculates the intrinsic value per share by executing a Monte Carlo simulation to find the closest growth rate that minimises
         the error with the current market stock price and the respective error
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
@@ -374,11 +375,11 @@ def growth_rate_optimisation(stock_parameters: dict[str, any], discount_rate: np
 
             tuple[np.ndarray, np.ndarray]:
 
-                -- best_growth_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, ndim_tg_rate) representing the growth rate that minimises the difference
+                - best_growth_rate (np.ndarray): Array of shape (1, 1, ndim_ds_rate, ndim_tg_rate) representing the growth rate that minimises the difference
                                                between the intrinsic value per share and the stock price across all combinations of discount rates and
                                                terminal growth rates
 
-                -- min_error (np.ndarray): Array of shape (1, 1, ndim_ds_rate, ndim_tg_rate) representing the minimum deviation over the time period,
+                - min_error (np.ndarray): Array of shape (1, 1, ndim_ds_rate, ndim_tg_rate) representing the minimum deviation over the time period,
                                         across all combinations of discount rates and terminal growth rates
     """
 
@@ -413,7 +414,7 @@ def implied_growth_rates_pd(stock_parameters: dict[str, any], discount_rate:np.n
         The function creates a DataFrame of the implied growth rates of the stock across all combinations of discount rates
         and terminal growth rates
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
@@ -452,7 +453,7 @@ def formatted_output(stock_parameters: dict[str, any], implied_gr_rate_df: pd.Da
     """
         The function formats and displays the DataFrame with improved output readability
 
-        Arguments:
+        Parameters:
 
             stock_parameters (dict[str, any]): Dictionary containing stock-specific parameters based on user input
 
@@ -469,10 +470,11 @@ def formatted_output(stock_parameters: dict[str, any], implied_gr_rate_df: pd.Da
 
     # Calculate the width based on the column names and formatting for bash title printing
     width = sum(len(str(col)) for col in terminal_growth_rates.items()) + len(implied_gr_rate_df.columns) + len(stock_parameters['company_stock']) + 20
-    print(f"\n{f" Reverse Discounted Cash Flow - {stock_parameters['company_stock']} ":-^{width}}")
+    header = " Reverse Discounted Cash Flow - {stock_parameters['company_stock']} "
+    print(f"\n{header:-^{width}}")
 
     # Print the DataFrame in tabular form
-    print(f'\n{tabulate(formatted_matrix_df, headers ='keys', tablefmt = 'grid', stralign = 'center', showindex = True)}')
+    print(f"\n{tabulate(formatted_matrix_df, headers ='keys', tablefmt = 'grid', stralign = 'center', showindex = True)}")
 
 def main() -> None:
     """
