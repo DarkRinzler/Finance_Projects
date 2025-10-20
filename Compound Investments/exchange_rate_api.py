@@ -28,7 +28,7 @@ Date
 
 # Version History
 # ---------------
-# v1.0  2024-12-04  Initial version
+# v1.0  12-04-2024  Initial version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -70,6 +70,7 @@ def fetch_exchange_rates() -> None:
         The function fetches exchange rates for the requested currency from an external API and updates the cache
 
         Arguments:
+            No arguments
 
         Returns:
             None

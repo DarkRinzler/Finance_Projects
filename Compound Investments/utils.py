@@ -27,8 +27,9 @@ Date
 
 # Version History
 # -------------------------------------------------------- #
-# v1.0  2025-01-06  First Version
-# v1.1  2025-10-10  First Version
+# v1.0  01-06-2025  First Version
+# v1.1  10-10-2025  Second Version
+# v1.2  20-10-2025  Third Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -45,7 +46,7 @@ from matplotlib.ticker import FuncFormatter  # Visualisation formatter
 from colorama import Fore, init              # Bash coloring
 
 # Initialize colorama
-init(autoreset=True)
+init(autoreset = True)
 
 # -------------------------------------------------------- #
 #                       WRAPPERS
@@ -56,12 +57,12 @@ def timer(func: callable) -> callable:
         Decorator that measures the execution time of a function.
 
         Arguments:
-
-            func (callable): Function to be timed
+            func: **(callable)**
+                Function to be timed
 
         Returns:
-
-            callable: A wrapped version of the input function that measures and reports its execution time when called.
+            **(callable)**:
+                A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -83,18 +84,20 @@ def input_choice(key_prompt: str, currency_types: dict[any, any], parameters: di
         The function prints the available currency options in color and validates the user's selection
 
         Arguments:
+            key_prompt: **(str)**
+                Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
-            key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
+            currency_types: **(dict[any, any])**
+                Dictionary containing the available currency options
 
-            currency_types (dict[any, any]): Dictionary containing the available currency options
-
-            parameters (dict[any, any]): Dictionary used to store the user's selected options based on the prompts
+            parameters: **(dict[any, any])**
+                Dictionary used to store the user's selected options based on the prompts
 
         Returns:
-
-            None
+            **None**
     """
 
+    # Output to bash the available currency options
     currency_keys = list(currency_types.keys())
 
     for i, (curr_key, curr_type) in enumerate(currency_types.items(), start=1):
@@ -116,16 +119,17 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
         of the script compound_investment_calculator.py
 
         Arguments:
+            key_prompt: **(str)**
+                Dictionary key corresponding to a numerical value in the prompts dictionary
 
-            key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
-
-            value_prompt (float): Numerical value associated with key_prompt key in the prompts dictionary
+            value_prompt: **(float)**
+                Numerical value associated with key_prompt key in the prompts dictionary
 
         Returns:
-
-            None
+            **None**
     """
 
+    # Raise an error if numerical inputs (e.g., initial investment, monthly contribution, annual return rate or investment period) are invalid or missing
     if key_prompt == 'initial investment' and value_prompt <= 0:
         raise ValueError("The initial investment can not be less or equal to 0")
     if key_prompt == 'monthly contribution' and value_prompt < 0:
@@ -145,22 +149,19 @@ def plt_investment(investment_parameters: dict[str, any], investment_growth: tup
         highlighting every 5 years the corresponding return and cost values
 
         Arguments:
+            investment_parameters: **(dict[str, any])**
+                Dictionary containing investment-specific parameters based on user input
 
-            investment_parameters (dict[str, any]): Dictionary containing investment-specific parameters based on user input
+            investment_growth:  **(tuple[np.ndarray, np.ndarray])**
+                Tuple containing the investments returns and cost over the investment period
+                - **investment_returns** (**np.ndarray**): Array of shape (total_months + 1, ) representing the investment returns for each month within the selected investment period
+                - **investment_costs** (**np.ndarray**): Array of shape (total_months + 1, ) representing the investment costs for each month within the selected investment period
 
-            investment_growth (tuple[np.ndarray, np.ndarray]): Tuple of two arrays:
-
-                - investment_returns (np.ndarray): Array of shape (total_months + 1, ) representing the investment returns for each month within
-                                                    the selected investment period
-
-                - investment_costs (np.ndarray): Array of shape (total_months + 1, ) representing the investment costs for each month within
-                                                  the selected investment period
-
-            months_in_year (int): Number of months in a year
+            months_in_year: **(int)**
+                Number of months in a year
 
         Returns:
-
-            None
+            **None**
     """
 
     # Retrieve the user's investment period and the yearly returns and costs

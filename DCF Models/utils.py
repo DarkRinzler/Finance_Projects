@@ -27,8 +27,8 @@ Date
 
 # Version History
 # -------------------------------------------------------- #
-# v1.0  2025-02-20  Initial version
-# v1.3  2025-09-26  Second Version
+# v1.0  02-20-2025  Initial version
+# v1.3  09-26-2025  Second Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -46,7 +46,7 @@ import seaborn as sns                        # Visualisation (heatmap)
 from colorama import Fore, init              # Bash coloring
 
 # Initialize colorama
-init(autoreset=True)
+init(autoreset = True)
 
 # -------------------------------------------------------- #
 #                       WRAPPERS
@@ -57,12 +57,12 @@ def timer(func: callable) -> callable:
         Decorator that measures the execution time of a function.
 
         Parameters:
-
-            func (callable): Function to be timed
+            func:  **(callable)**
+                Function to be timed
 
         Returns:
-
-            callable: A wrapped version of the input function that measures and reports its execution time when called.
+            **(callable)**:
+                A wrapped version of the input function that measures and reports its execution time when called.
     """
 
     @wraps(func)
@@ -84,18 +84,20 @@ def input_choice(key_prompt: str, stock_parameters: dict[any, any], parameters: 
         The function prints the available currency options in color and validates the user's selection
 
         Parameters:
+            key_prompt: **(str)**
+                Dictionary key corresponding to the currency numerical value in the prompts dictionary
 
-            key_prompt (str): Dictionary key corresponding to the currency numerical value in the prompts dictionary
+            stock_parameters: **(dict[any, any])**
+                Dictionary containing the available currency options
 
-            stock_parameters (dict[any, any]): Dictionary containing the available currency options
-
-            parameters (dict[any, any]): Dictionary used to store the user's selected options based on the prompts
+            parameters: **(dict[any, any])**
+                Dictionary used to store the user's selected options based on the prompts
 
         Returns:
-
-            None
+            **None**
     """
 
+    # Output to bash the available currency options
     curr_keys = list(stock_parameters.keys())
     for i, (sel_key, sel_type) in enumerate(stock_parameters.items(), start = 1):
         print(f'{i}. {Fore.GREEN}{sel_key} {Fore.RESET}({sel_type})')
@@ -116,16 +118,17 @@ def validation_numeric_input(key_prompt: str, value_prompt: float) -> None:
         discounted cash flow model of the script reverse_discounted_cash_flow.py
 
         Parameters:
+            key_prompt: **(str)**
+                Dictionary key corresponding to a numerical value in the prompts dictionary
 
-            key_prompt (str): Dictionary key corresponding to a numerical value in the prompts dictionary
-
-            value_prompt (float): Numerical value associated with key_prompt key in the prompts dictionary
+            value_prompt: **(float)**
+                Numerical value associated with key_prompt key in the prompts dictionary
 
         Returns:
-
-            None
+            **None**
     """
 
+    # Raise an error if numerical inputs (e.g., stock price, outstanding shares, or LTM free cash flow) are invalid or missing
     if key_prompt == 'stock_price' and value_prompt <= 0:
         raise ValueError("The stock price of the company can not be less or equal to 0")
     if key_prompt == 'outstanding_shares' and value_prompt <= 0:
@@ -142,14 +145,14 @@ def plt_heatmap(stock_parameters: dict[str, any], growth_rates: pd.DataFrame) ->
         The function creates a heatmap of the implied growth rates for all pairs of discount and terminal growth rates
 
         Parameters:
+            stock_parameters: **(dict[str, any])**
+                Dictionary containing the user's company selection
 
-            stock_parameters (dict[str, any]): Dictionary containing the user's company selection
-
-            growth_rates (pd.DataFrame): Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
+            growth_rates: **(pd.DataFrame)**
+                Dataframe containing the implied growth rates for all discount/terminal growth rate pairs
 
         Returns:
-
-            None
+            **None**
     """
 
     # Remove the DataFrame index before plotting Heat-Map
@@ -163,7 +166,7 @@ def plt_heatmap(stock_parameters: dict[str, any], growth_rates: pd.DataFrame) ->
     plt.figure(figsize = (16, 6))
 
     # Create a colormap
-    lightblue = sns.color_palette("vlag_r", as_cmap=True)
+    lightblue = sns.color_palette("vlag_r", as_cmap = True)
 
     # Define of the heatmap with corresponding parameters
     sns.heatmap(growth_rates, vmin = min_val, vmax = max_val, cmap = lightblue, annot = True, fmt = '.2f', linewidths = 0.5, square = False)

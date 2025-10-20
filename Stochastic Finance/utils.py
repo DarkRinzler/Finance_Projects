@@ -29,7 +29,8 @@ Date
 
 # Version History
 # -------------------------------------------------------- #
-# v1.0  2025-10-12  First Version
+# v1.0  10-12-2025  First Version
+# v1.1  10-20-2025  Second Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -54,12 +55,12 @@ def timer(func: callable) -> callable:
         Decorator that measures the execution time of a function
 
         Parameters:
-
-            func (callable): Function to be timed
+            func: **(callable)**
+                Function to be timed
 
         Returns:
-
-            callable: A wrapped version of the input function that measures and reports its execution time when called
+            **(callable)**:
+                A wrapped version of the input function that measures and reports its execution time when called
     """
 
     @wraps(func)
@@ -81,12 +82,12 @@ def percent(data: np.ndarray | bool) -> str:
         The function returns the mean of the data as a percentage string with 2 decimals
 
         Parameters:
-
-            data (np.ndarray | bool): Array of data values to format
+            data: **(np.ndarray | bool)**
+                Array of data values to format
 
         Returns:
-
-            str: Formatted data as "data%"
+            **(str)**:
+                Formatted data as percentage
     """
 
     return f"{np.mean(data) * 100:.3f}%"
@@ -96,16 +97,18 @@ def mean_ci(mean: float, ste: float, z: float = 1.96) -> str:
         The function returns the mean of the data with a confidence interval of 95%
 
         Parameters:
+            mean: **(np.ndarray)**
+                Mean value of the data
 
-            mean (np.ndarray): Mean value of the data
+            ste: **(np.ndarray)**
+                Standard error of the data
 
-            ste (np.ndarray): Standard error of the data
-
-            z (float): Critical value for the confidence interval, default 1.96 for 95% CI
+            z: **(float)**
+                Critical value for the confidence interval, default 1.96 for 95% CI
 
         Returns:
-
-            str: Formatted string as "mean ± z*std"
+            **(str)**:
+                Formatted string as "mean ± confidence interval"
     """
 
     return f"{mean:.3f} ± {z * ste:.3f}"
@@ -116,25 +119,29 @@ def mean_ci(mean: float, ste: float, z: float = 1.96) -> str:
 
 def kde_stock_plot(data: dict[str, np.ndarray], plot_name: str, x_axis: bool) -> None:
     """
-        The function generates a plot showing the probability density distribution for all data with key percentiles and the mean
+        The function generates a plot showing the probability density distribution for multiple groups of data
 
         Parameters:
+            data: **(np.ndarray)**
+                Array of stock data values to visualize
 
-            data (np.ndarray): Array of stock data values to visualize
+            plot_name: **(str)**
+                Name of the plot file to save
 
-            plot_name (str): Name of the plot file to save
-
-            x_axis (bool):
+            x_axis: **(bool)**
+                Flag to select whether to format the x-axis
 
         Returns:
-
-            None
+            **None**
     """
 
+    # Create a DataFrame from the input dictionary, flattening each array
     data_dataframe = pd.DataFrame({day: arr.ravel() for day, arr in data.items()})
 
+    # Reshape the DataFrame to a long format for easier plotting with Seaborn
     lag_dataframe = data_dataframe.melt(value_vars = data_dataframe.columns, var_name = 'lag', value_name = 'values')
 
+    # Randomly sample 10,000 data points for each lag category to reduce dataset size
     sampled_data = (
         lag_dataframe
         .groupby(by = 'lag')
@@ -159,7 +166,7 @@ def kde_stock_plot(data: dict[str, np.ndarray], plot_name: str, x_axis: bool) ->
     plt.grid(False)
 
     if x_axis:
-        # Get the current Axes instance to customize the plot
+        # Get the current axes instance to customize the plot
         ax = plt.gca()
 
         # Move x-axis to y = 0

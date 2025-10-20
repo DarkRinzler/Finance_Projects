@@ -40,9 +40,10 @@ Date
 
 # Version History
 # -------------------------------------------------------- #
-# v1.0  2025-10-07  Initial version
-# v1.1  2025-10-10  Second version
-# v1.2  2025-17-10  Third version
+# v1.0  07-10-2025  Initial Version
+# v1.1  10-10-2025  Second Version
+# v1.2  17-10-2025  Third Version
+# v1.3  20-10-2025  Fourth Version
 
 # -------------------------------------------------------- #
 #                       LIBRARIES
@@ -114,13 +115,12 @@ def log_data(data: pd.DataFrame) -> pd.DataFrame:
         The function adds log-returns for the company's stock price and exchange rate to the input DataFrame, and renames columns for improved clarity
 
         Parameters:
-
-            data (pd.DataFrame): DataFrame containing the raw data
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data
 
         Returns:
-
-            **enriched_data** (pd.DataFrame): DataFrame of shape (n_rows, n_cols + 2) containing the original company data with additional columns for log-returns
-                                                  of the stock price and the exchange rate
+            enriched_data: **(pd.DataFrame)**
+                DataFrame of shape (n_rows, n_cols + 2) containing the original company data with additional columns for log-returns of the stock price and the exchange rate
     """
 
     # Rename columns of the Dataframe and sort it in ascending order by date for later use
@@ -158,18 +158,21 @@ def nw_annualised_moments(data: np.ndarray, lag: int, axis: int, keepdims: bool)
         of the variance when returns or residuals are serially correlated, as is common in financial time series
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            lag: **(int)**
+                Number of autocorrelation lags to include in the Newey–West correction
 
-            lag (int): Number of autocorrelation lags to include in the Newey–West correction
+            axis: **(int)**
+                Axis along which to compute the statistic
 
-            axis (int): Axis along which to compute the statistic
-
-            keepdims (bool): Whether to keep the reduced dimensions in the output
+            keepdims: **(bool)**
+                Whether to keep the reduced dimensions in the output
 
         Returns:
-
-            **nw_var** (np.ndarray): Newey–West adjusted standard deviation of the input data, computed along the specified axis
+            nw_var: **(np.ndarray)**
+                Newey–West adjusted standard deviation of the input data, computed along the specified axis
     """
 
     # Number of samples along the specified axis
@@ -199,19 +202,21 @@ def annualised_moments(data: pd.DataFrame, days: int, log_stock: str = 'log_sek_
         The function computes the annualised first two moments (mean and standard deviation) of log-returns for the company stock price and exchange rate
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            days: **(int)**
+                Number of days to correlate in the Newey-West estimator
 
-            days (int): Number of days to correlate in the Newey-West estimator
+            log_stock: **(str)**
+                Column name for the stock log-returns, default is 'log_returns'
 
-            log_stock (str): Column name for the stock log-returns, default is 'log_returns'
-
-            log_exchange (str): Column name for the exchange rate log-returns, default is 'log_eur/sek'
+            log_exchange: **(str)**
+                Column name for the exchange rate log-returns, default is 'log_eur/sek'
 
         Returns:
-
-            **log_returns_stats** (dict[str, tuple[float, float]]): Dictionary mapping each series to a tuple of its first two moments (annualised mean and
-                                                                annualised standard deviation), for the log-returns of the stock price and the exchange rate
+            log_returns_stats: **(dict[str, tuple[float, float]])**:
+                Dictionary mapping each series to a tuple of its first two moments (annualised mean and annualised standard deviation), for the log-returns of the stock price and the exchange rate
     """
 
     # Columns to compute statistics on
@@ -241,20 +246,20 @@ def cholesky_factorisation(data: pd.DataFrame, stock: str = 'stock_sek_price', e
         The function checks if the correlation matrix between the stock price and exchange rate allows for Cholesky factorisation
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            stock: **(str)**
+                Column name for the stock price, default is 'stock_price'
 
-            stock (str): Column name for the stock price, default is 'stock_price'
-
-            exchange (str): Column name for the exchange rate, default is 'eur/sek'
+            exchange: **(str)**
+                Column name for the exchange rate, default is 'eur/sek'
 
         Returns:
-
-            tuple[bool, np.ndarray | None]:
-
-                - **factorisation** (bool): True if the correlation matrix is positive definite and Cholesky factorisation is possible, False otherwise
-
-                - **triangular_factor** (np.ndarray | None): Lower-triangular matrix from the Cholesky factorisation if possible, None otherwise
+            **(tuple[bool, np.ndarray | None])**:
+                Tuple containing the factorisation result and the corresponding Cholesky decomposition
+                - **factorisation** **(bool)**: True if the correlation matrix is positive definite and Cholesky factorisation is possible, False otherwise
+                - **triangular_factor** **(np.ndarray | None)**: Lower-triangular matrix from the Cholesky factorisation if possible, None otherwise
     """
 
     # Initialize flag for Cholesky factorisation
@@ -286,33 +291,36 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
         The function computes the stochastic evolution of the stock price, stock log-returns, and exchange rate
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            log_stats_moments: **(dict[str, tuple[float, float]])**
+                Dictionary of tuples of the first two moments (annualised mean and annualised standard deviation) for the log-returns of the sek stock price and exchange rate
 
-            log_stats_moments (dict[str, tuple[float, float]]): Dictionary of tuples of the first two moments (annualised mean and annualised standard deviation)
-                                                                for the log-returns of the sek stock price and exchange rate
+            ch_flag: **(bool)**
+                Boolean flag that allows for cholesky factorisation
 
-            ch_flag (bool): Boolean flag that allows for cholesky factorisation
+            nw_flag: **(bool)**
+                Boolean flag that allows for Newey_West standard deviation
 
-            nw_flag (bool): Boolean flag that allows for Newey_West standard deviation
+            stock: **(str)**
+                Column name for the stock price, default is 'stock_price'
 
-            stock (str): Column name for the stock price, default is 'stock_price'
+            log_stock: **(str)**
+                Column name for the stock log-returns, default is 'log_returns'
 
-            log_stock (str): Column name for the stock log-returns, default is 'log_returns'
+            exchange: **(str)**
+                Column name for the exchange rate, default is 'eur/sek'
 
-            exchange (str): Column name for the exchange rate, default is 'eur/sek'
-
-            log_exchange (str): Column name for the exchange rate log-returns, default is 'log_eur/sek'
+            log_exchange: **(str)**
+                Column name for the exchange rate log-returns, default is 'log_eur/sek'
 
         Returns:
-
-            tuple[np.ndarray, np.ndarray, np.ndarray]:
-
-                - **stock_paths** (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
-
-                - **log_return_paths** (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock log-returns
-
-                - **exchange_rate_paths** (np.ndarray): Array of shape (n_simulations, trading_days) with simulated exchange rates
+            **(tuple[np.ndarray, np.ndarray, np.ndarray])**:
+                Tuple containing the stochastic evolution of the stock price, stock log-returns, and exchange rate
+                - **stock_paths** **(np.ndarray)**: Array of shape (n_simulations, trading_days) with simulated stock prices
+                - **log_return_paths** **(np.ndarray)**: Array of shape (n_simulations, trading_days) with simulated stock log-returns
+                - **exchange_rate_paths** **(np.ndarray)**: Array of shape (n_simulations, trading_days) with simulated exchange rates
         """
 
     # Fetch the log-returns moments for the stock price and exchange rate
@@ -364,26 +372,29 @@ def tranche_contribution(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray,
         The function computes the tranche contribution arrays representing the percentage achievement of performance targets for each simulation
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            stock_sek_prices_paths: **(np.ndarray)**
+                Array of shape (n_simulations, trading_days) with simulated stock prices
 
-            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
+            stock_sek_log_returns_paths: **(np.ndarray)**
+                Array of shape (n_simulations, trading_days) with simulated stock log-returns
 
-            stock_sek_log_returns_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock log-returns
+            days: **(int)**
+                Number of days to extend the autocorrelation using the Newey–West method
 
-            days (int):
+            nw_flag: **(bool)**
+                Boolean flag that allows for Newey_West standard deviation
 
-            nw_flag (bool): Boolean flag that allows for Newey_West standard deviation
-
-            stock (str): Column name for the stock price, default is 'stock_price'
+            stock: **(str)**
+                Column name for the stock price, default is 'stock_price'
 
         Returns:
-
-            tuple[np.ndarray, np.ndarray]:
-
-            - **tranche1** (np.ndarray): Array of shape (n_simulations, 1) with percentage values of target achievement for the first tranche (based on total shareholder return)
-
-            - **tranche2** (np.ndarray): Array of shape (n_simulations, 1) with percentage values of target achievement for the second tranche (based on annualised volatility)
+            **(tuple[np.ndarray, np.ndarray])**:
+                Tuple containing the tranche contribution arrays representing the percentage achievement of performance targets for each simulation
+                - **tranche1** **(np.ndarray)**: Array of shape (n_simulations, 1) with percentage values of target achievement for the first tranche (based on total shareholder return)
+                - **tranche2** **(np.ndarray)**: Array of shape (n_simulations, 1) with percentage values of target achievement for the second tranche (based on annualised volatility)
     """
 
     # Fetch the target values for the yearly returns and the volatility
@@ -422,14 +433,15 @@ def trigger(stock_sek_prices_paths: np.ndarray, exchange_rate_paths: np.ndarray)
         The function computes the boolean trigger value for each simulation
 
         Parameters:
+            stock_sek_prices_paths: **(np.ndarray)**
+                Array of shape (n_simulations, trading_days) with simulated sek stock prices
 
-            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated sek stock prices
-
-            exchange_rate_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated exchange rates
+            exchange_rate_paths: **(np.ndarray)**
+                Array of shape (n_simulations, trading_days) with simulated exchange rates
 
         Returns:
-
-             triggers (np.ndarray): Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
+             triggers: **(np.ndarray)**
+                Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
     """
 
     # Calculate the corresponding stock prices in EUR from the simulated one in SEK
@@ -448,32 +460,34 @@ def fair_value(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray, tranches:
         and discounting with the latest one year euro interest rate
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            stock_sek_prices_paths: **(np.ndarray)**
+                Array of shape (n_simulations, trading_days) with simulated stock prices
 
-            stock_sek_prices_paths (np.ndarray): Array of shape (n_simulations, trading_days) with simulated stock prices
-
-            tranches (tuple[np.ndarray, np.ndarray]):
-
+            tranches: **(tuple[np.ndarray, np.ndarray])**
+                Tuple containing the tranche contribution arrays representing the percentage achievement of performance targets for each simulation
                 - Array of shape (n_simulations, 1) with percentage values of target achievement for the first tranche (based on total shareholder return)
-
                 - Array of shape (n_simulations, 1) with percentage values of target achievement for the second tranche (based on annualised volatility)
 
-            triggers (np.ndarray): Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
+            triggers: **(np.ndarray)**
+                Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
 
-            stock (str): Column name for the sek stock price, default is 'stock_sek_price'
+            stock: **(str)**
+                Column name for the sek stock price, default is 'stock_sek_price'
 
-            exchange (str): Column name for the exchange rate, default is 'eur/sek'
+            exchange: **(str)**
+                Column name for the exchange rate, default is 'eur/sek'
 
-            yearly_rate (str): Column name for the yearly sek interest rate, default is 'sek_1y_rate'
+            yearly_rate: **(str)**
+                Column name for the yearly sek interest rate, default is 'sek_1y_rate'
 
         Returns:
-
-            dict[str, Any]: Dictionary containing the discounted expected fair values and payout factors:
-
-                - **fair_value** (dict[str, float]): Dictionary containing the expected fair value per unit share under the non-path-dependent and path-dependent assumption
-
-                - **payout_factors** (np.ndarray): Array of shape (n_simulations, 1) containing the payout factors computed across all simulations
+            **(dict[str, Any])**:
+                Dictionary containing the discounted expected fair values and payout factors
+                - **fair_value** **(dict[str, float])**: Dictionary containing the expected fair value per unit share under the non-path-dependent and path-dependent assumption
+                - **payout_factors** **(np.ndarray)**: Array of shape (n_simulations, 1) containing the payout factors computed across all simulations
     """
 
     # Unpack tranche contributions
@@ -537,22 +551,24 @@ def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -
         The function computes the boolean trigger value for each simulation
 
         Parameters:
+            data: **(pd.DataFrame)**
+                DataFrame containing the raw data as well as log-returns
 
-            data (pd.DataFrame): DataFrame containing the raw data as well as log-returns
+            days: **(int)**
+                Number of days to extend the autocorrelation using the Newey–West method
 
-            days (int):
+            ch_flag: **(bool)**
+                Boolean flag that allows for cholesky factorisation
 
-            ch_flag (bool): Boolean flag that allows for cholesky factorisation
-
-            nw_flag (bool): Boolean flag that allows for Newey_West standard deviation
+            nw_flag: **(bool)*
+                Boolean flag that allows for Newey_West standard deviation
 
         Returns:
-
-             result (dict[str, any]): Array of shape (n_simulations, 1) indicating whether the trigger condition (stock price >= 10) was met in each simulation
-             TO CHANGE
-
-             stochastic_dict (dict[str, any]): Dictionary containing the expected fair value per unit share under the non-path-dependent and path-dependent assumption
-             TO CHANGE
+            **(tuple[dict[str, any], dict[str, any], dict[str, any]])**:
+                Tuple containing three dictionaries with the simulation results used for reporting and plotting
+                - **bash_data** **(dict[str, any])**: Contains fair value estimates (path-dependent and non-path-dependent), mean total payout, and probabilities of maximum tranche achievement and trigger activation
+                - **bash_flags** **(dict[str, any])**: Contains simulation metrics when Cholesky decomposition and the Newey–West method are applied for console output
+                - **plot_flags** **(dict[str, any])**: Contains simulation results used for generating plots of stock prices, tranches, payouts, and trigger activations
     """
 
     # Define dictionaries for storing quantities of interest
@@ -639,6 +655,7 @@ def main() -> None:
 
     # Run all combinations of flags and days lag
     for days in range(min_lag, max_lag + 1, 2):
+
         header = f" Simulation results for {days} days correlation "
         print(f"\n{header:-^{150}}")
 
@@ -668,6 +685,7 @@ def main() -> None:
                 payouts[f'{days}_day'] = plot_data['payouts']
                 triggers[f'{days}_day'] = plot_data['trigger']
 
+        # Create DataFrame of all simulations results for all flag values
         all_data_df = pd.DataFrame(all_combinations)
 
         # Print the DataFrame in tabular form
@@ -676,6 +694,7 @@ def main() -> None:
     header = " Simulation results for Cholesky decomposition and Newey-West method employed "
     print(f"\n{header:-^{150}}")
 
+    # Create DataFrame of all simulations results when Cholesky decomposition and the Newey–West method are applied
     best_data_df = pd.DataFrame(best_bash_results)
 
     # Print the DataFrame in tabular form
@@ -691,7 +710,7 @@ def main() -> None:
         "triggers": triggers
     }
 
-    # Save plot for each quantity of interest
+    # Save the kde plots showing the probability density distribution for multiple groups of data
     for plot_name, plot_dict_values in plot_collections.items():
         if plot_name in ['stock_(sek)', 'stock_(eur)']:
             utils.kde_stock_plot(data = plot_dict_values, plot_name = plot_name, x_axis = True)
