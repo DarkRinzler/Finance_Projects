@@ -9,12 +9,9 @@ Inputs
 
 Process
 -----------------------------------------------------------------------
-- Compute implied growth rates over a 10-year horizon
-  for combinations of discount rates and terminal growth rates
-- Solve reverse DCF numerically (Monte Carlo approach)
-- Generate heatmaps of implied growth rates
-
-# CHANGE SECTION
+- Evolve stochastically quantity of interest through the use of Cholesky decomposition and Newey-West method over a 1-year horizon
+- Calculate the fair value of the share plan (Monte Carlo approach)
+- Generate plots for different lag days
 
 Dependencies
 -----------------------------------------------------------------------
@@ -31,7 +28,7 @@ Riccardo Nicolò Iorio
 
 Date
 -----------------------------------------------------------------------
-2025-10-07
+10-07-2025
 """
 
 # -------------------------------------------------------- #
