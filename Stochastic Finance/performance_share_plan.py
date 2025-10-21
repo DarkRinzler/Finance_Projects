@@ -194,7 +194,7 @@ def nw_annualised_moments(data: np.ndarray, lag: int, axis: int, keepdims: bool)
     return np.sqrt(nw_var)
 
 
-def annualised_moments(data: pd.DataFrame, days: int, log_stock: str = 'log_sek_returns', log_exchange: str = 'log_eur/sek') -> dict[str, tuple[float, float, float]]:
+def annualised_moments(data: pd.DataFrame, days: int, arbitrage: bool, risk_free: str = 'sek_1y_rate', log_stock: str = 'log_sek_returns', log_exchange: str = 'log_eur/sek') -> dict[str, tuple[float, float, float]]:
     """
         The function computes the annualised first two moments (mean and standard deviation) of log-returns for the company stock price and exchange rate
 
@@ -204,6 +204,12 @@ def annualised_moments(data: pd.DataFrame, days: int, log_stock: str = 'log_sek_
 
             days: **(int)**
                 Number of days to correlate in the Newey-West estimator
+
+            arbitrage: **(bool)**
+                Flag that selects if arbitrage free conditions are assumed
+
+            risk_free: **(str)** = 'sek_1y_rate'
+                Column name for the sek 1 year risk freer rate, default is 'sek_1y_rate'
 
             log_stock: **(str)**
                 Column name for the stock log-returns, default is 'log_returns'
@@ -220,10 +226,20 @@ def annualised_moments(data: pd.DataFrame, days: int, log_stock: str = 'log_sek_
     stats_columns = [log_stock, log_exchange]
 
     # Calculate annualised first two moments (mean and standard deviation)
+    if arbitrage:
+        mean_annual = data[stats_columns].mean(skipna = True) * trading_days
+    else:
+        mean_annual =  np.log(1 + data[risk_free].iloc[-1] / 100)
+
+    std_annual = data[stats_columns].std(skipna = True, ddof = 1) * np.sqrt(trading_days)
+
+    nw_std_annual = nw_annualised_moments(data = data[stats_columns].dropna().to_numpy(), lag = days, axis = 0, keepdims = False) * np.sqrt(trading_days)
+
+    # DataFrame containing annualised statistics
     annualised_stats = pd.DataFrame({
-            'mean': data[stats_columns].mean(skipna = True) * trading_days,
-            'std': data[stats_columns].std(skipna = True, ddof = 1) * np.sqrt(trading_days),
-            'nw_std' : nw_annualised_moments(data = data[stats_columns].dropna().to_numpy(), lag = days, axis = 0, keepdims = False) * np.sqrt(trading_days)
+            'mean': mean_annual,
+            'std': std_annual,
+            'nw_std' : nw_std_annual
         }, index = stats_columns)
 
     # Dictionary containing tuples containing the first and second moment for the stock price and exchange rate log-returns
@@ -320,7 +336,7 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
                 - **exchange_rate_paths** **(np.ndarray)**: Array of shape (n_simulations, trading_days) with simulated exchange rates
         """
 
-    # Fetch the log-returns moments for the stock price and exchange rate
+    # Fetch the annualised log-returns moments for the stock price and exchange rate
     mu_stock, var_stock, nw_var_stock = log_stats_moments[f'{log_stock}_moments']
     mu_exchange, var_exchange, nw_var_exchange = log_stats_moments[f'{log_exchange}_moments']
 
@@ -543,7 +559,7 @@ def fair_value(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray, tranches:
 # -------------------------------------------------------- #
 
 #@utils.timer
-def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -> tuple[dict[str, any], dict[str, any], dict[str, any]]:
+def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool, arbitrage: bool) -> tuple[dict[str, any], dict[str, any], dict[str, any]]:
     """
         The function computes the boolean trigger value for each simulation
 
@@ -560,19 +576,22 @@ def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -
             nw_flag: **(bool)*
                 Boolean flag that allows for Newey_West standard deviation
 
+            arbitrage: **(bool)**
+                Flag that selects if arbitrage free conditions are assumed
+
         Returns:
             **(tuple[dict[str, any], dict[str, any], dict[str, any]])**:
                 Tuple containing three dictionaries with the simulation results used for reporting and plotting
                 - **bash_data** **(dict[str, any])**: Contains fair value estimates (path-dependent and non-path-dependent), mean total payout, and probabilities of maximum tranche achievement and trigger activation
                 - **bash_flags** **(dict[str, any])**: Contains simulation metrics when Cholesky decomposition and the Newey–West method are applied for console output
-                - **plot_flags** **(dict[str, any])**: Contains simulation results used for generating plots of stock prices, tranches, payouts, and trigger activations
+                - **plot_flags** **(dict[str, any])**: Contains simulation results used for generating plots of stock prices, tranches, payouts, and trigger activations for both arbitrage and non-arbitrage case
     """
 
     # Define dictionaries for storing quantities of interest
     plot_flags, bash_flags = {}, {}
 
     # Compute the annualised moments
-    statistic_values = annualised_moments(data = data, days = days)
+    statistic_values = annualised_moments(data = data, days = days, arbitrage = arbitrage)
 
     # Run stochastic evolution
     ft_stock_sek_prices, ft_sek_log_returns, ft_exchange_rate = stochastic_evolution(data = data, log_stats_moments = statistic_values, ch_flag = ch_flag, nw_flag = nw_flag)
@@ -605,7 +624,7 @@ def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -
 
         # Dictionary containing simulated quantities for bash output
         bash_flags = {
-            'fv_eur_non_path': utils.mean_ci(unit_fair_value['non_path_dependent']['mean'], unit_fair_value['non_path_dependent']['standard_error']),
+            'fv_eur_no_path': utils.mean_ci(unit_fair_value['non_path_dependent']['mean'], unit_fair_value['non_path_dependent']['standard_error']),
             'fv_eur_path': utils.mean_ci(unit_fair_value['path_dependent']['mean'], unit_fair_value['path_dependent']['standard_error']),
             'mean_tot_payout': utils.percent(payout_factors),
             'prob_tr1_max': utils.percent(tranches[0] == 1),
@@ -613,12 +632,13 @@ def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -
             'prob_trig': utils.percent(boolean_trigger),
             'mean_payout_tr1': utils.percent(tranches[0]),
             'mean_payout_tr2': utils.percent(tranches[1]),
-            'lag_days': days
+            'lag_days': days,
+            'arbitrage': arbitrage
         }
 
     # Results for all flag combinations (for DataFrame)
     bash_data = {
-        'fv_eur_non_path': utils.mean_ci(unit_fair_value['non_path_dependent']['mean'], unit_fair_value['non_path_dependent']['standard_error']),
+        'fv_eur_no_path': utils.mean_ci(unit_fair_value['non_path_dependent']['mean'], unit_fair_value['non_path_dependent']['standard_error']),
         'fv_eur_path': utils.mean_ci(unit_fair_value['path_dependent']['mean'], unit_fair_value['path_dependent']['standard_error']),
         'mean_tot_payout': utils.percent(payout_factors),
         'prob_tr1_max': utils.percent(tranches[0] == 1),
@@ -628,7 +648,8 @@ def fair_price_pd(data: pd.DataFrame, days: int, ch_flag: bool, nw_flag: bool) -
         'mean_payout_tr2': utils.percent(tranches[1]),
         'cholesky': ch_flag,
         'newey_west': nw_flag,
-        'lag_days': days
+        'lag_days': days,
+        'arbitrage': arbitrage
     }
 
     return bash_data, bash_flags, plot_flags
@@ -641,8 +662,8 @@ def main() -> None:
     # Stores simulation results when both flags are True for bash output
     best_bash_results, all_combinations = [], []
 
-    # Stores simulation results when both flags are True for plotting through cases for each quantity of interest
-    stock_sek, stock_eur, tranche_1, tranche_2, payouts, triggers  = {}, {}, {}, {}, {}, {}
+    # Stores simulation results when both flags are True for plotting through cases for each quantity of interest for arbitrage and not
+    quantities = {name : {True: {}, False: {}} for name in ['stock_sek', 'stock_eur', 'tranche_1', 'tranche_2', 'payouts', 'triggers']}
 
     # Read Excel file and cast it into a DataFrame
     aurora_metals: pd.DataFrame = pd.read_excel('aurora_metals_data.xlsx')
@@ -650,10 +671,13 @@ def main() -> None:
     # Sorted DataFrame with columns for log-returns and log-exchange rate values
     extended_data = log_data(data = aurora_metals)
 
-    # Run all combinations of flags and days lag
-    for days in range(min_lag, max_lag + 1, 2):
+    # Arbitrage combinations
+    arbitrage_combinations = product([False, True], [lag for lag in range(min_lag, max_lag + 1, 2)])
 
-        header = f" Simulation results for {days} days correlation "
+    # Run all combinations of flags and days lag
+    for arbitrage, days in arbitrage_combinations:
+
+        header = f" Simulation results for {days} days correlation"
         print(f"\n{header:-^{150}}")
 
         # Stores simulation results for all flag combinations for bash output
@@ -665,7 +689,7 @@ def main() -> None:
         # Print progress bar when looping over combinations of flags
         for ch_flag, nw_flag in tqdm(flag_combinations, total = 4, desc = 'Progress', dynamic_ncols = True, colour = 'green', file = sys.stdout):
 
-            daily_results, best_results, plot_data = fair_price_pd(data = extended_data, days = days, ch_flag = ch_flag, nw_flag = nw_flag)
+            daily_results, best_results, plot_data = fair_price_pd(data = extended_data, days = days, ch_flag = ch_flag, nw_flag = nw_flag, arbitrage = arbitrage)
 
             # Append daily results
             all_combinations.append(daily_results)
@@ -674,13 +698,13 @@ def main() -> None:
                 # Append best results
                 best_bash_results.append(best_results)
 
-                # Append plot data for each quantity
-                stock_sek[f'{days}_day'] = plot_data['stock_price_(sek)']
-                stock_eur[f'{days}_day'] = plot_data['stock_price_(eur)']
-                tranche_1[f'{days}_day'] = plot_data['tranche_1']
-                tranche_2[f'{days}_day'] = plot_data['tranche_2']
-                payouts[f'{days}_day'] = plot_data['payouts']
-                triggers[f'{days}_day'] = plot_data['trigger']
+                # Append plot data for each quantity for arbitrage conditions
+                quantities['stock_sek'][arbitrage][f'{days}_day'] = plot_data['stock_price_(sek)']
+                quantities['stock_eur'][arbitrage][f'{days}_day'] = plot_data['stock_price_(eur)']
+                quantities['tranche_1'][arbitrage][f'{days}_day'] = plot_data['tranche_1']
+                quantities['tranche_2'][arbitrage][f'{days}_day'] = plot_data['tranche_2']
+                quantities['payouts'][arbitrage][f'{days}_day'] = plot_data['payouts']
+                quantities['triggers'][arbitrage][f'{days}_day'] = plot_data['trigger']
 
         # Create DataFrame of all simulations results for all flag values
         all_data_df = pd.DataFrame(all_combinations)
@@ -699,20 +723,24 @@ def main() -> None:
 
     # Dictionary where each quantity stores its full set of lag-dependent simulation data
     plot_collections = {
-        "stock_(sek)": stock_sek,
-        "stock_(eur)": stock_eur,
-        "tranche_1": tranche_1,
-        "tranche_2": tranche_2,
-        "payouts": payouts,
-        "triggers": triggers
+        "stock_(sek)": quantities['stock_sek'],
+        "stock_(eur)": quantities['stock_eur'],
+        "tranche_1": quantities['tranche_1'],
+        "tranche_2": quantities['tranche_2'],
+        "payouts": quantities['payouts'],
+        "triggers": quantities['triggers']
     }
 
     # Save the kde plots showing the probability density distribution for multiple groups of data
     for plot_name, plot_dict_values in plot_collections.items():
-        if plot_name in ['stock_(sek)', 'stock_(eur)']:
-            utils.kde_stock_plot(data = plot_dict_values, plot_name = plot_name, x_axis = True)
-        else:
-            utils.kde_stock_plot(data = plot_dict_values, plot_name = plot_name, x_axis = False)
+        stock_plot = plot_name in ['stock_(sek)', 'stock_(eur)']
+
+        for arbitrage, plot_values in plot_dict_values.items():
+
+            title_suffix = "arbitrage" if arbitrage else "no_arbitrage"
+            full_plot_name = f"{plot_name}_{title_suffix}"
+
+            utils.kde_stock_plot(data = plot_values, plot_name = full_plot_name, x_axis = stock_plot)
 
 if __name__ == '__main__':
     main()
