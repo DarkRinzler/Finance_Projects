@@ -350,7 +350,7 @@ def stochastic_evolution(data: pd.DataFrame, log_stats_moments: dict[str, tuple[
 
     # Retrieve the grant date values for the sek stoch price and exchange rate for starting the stochastic evolution
     grant_date_stock_price = data[stock].iloc[-1]
-    grant_date_exchange_rate= data[exchange].iloc[-1]
+    grant_date_exchange_rate = data[exchange].iloc[-1]
 
     # Generate two gaussian distributed numbers to evolve both the stock price and the exchange rate
     normal_samples = np.random.normal(loc = 0, scale = 1, size = (n_simulations, trading_days, 2))
@@ -527,7 +527,7 @@ def fair_value(data: pd.DataFrame, stock_sek_prices_paths: np.ndarray, tranches:
     path_std_payout = np.std(payout_factors * stock_sek_prices_paths[:, -1].reshape(-1, 1), axis = 0, ddof = 1, keepdims = True)
 
     # Discount factor
-    discount_factor = np.exp(- (grant_sek_interest_rate * T))
+    discount_factor = np.exp( - (grant_sek_interest_rate * T))
 
     # Convert the unit share fair value to euro at grant date
     non_path_fv = float(np.squeeze((non_path_mean_payout * discount_factor) / grant_exchange))
